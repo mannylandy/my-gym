@@ -43,31 +43,59 @@
 
       <symbol id="i-streak" viewBox="0 0 24 24">
         <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2.5c.5 4 5.5 6 5.5 11.500a5.500 5.500 0 0 1-11 0c0-2.200 1-3.800 2.200-5 .3 1.500 1 2.300 2 2.700C10.200 8.500 10.800 5.500 12 2.500z"/>
+          <path d="M12 2.5c.5 4 5.5 6 5.5 11.5a5.5 5.5 0 0 1-11 0c0-2.200 1-3.800 2.200-5 .3 1.500 1 2.300 2 2.700C10.200 8.500 10.800 5.500 12 2.500z"/>
         </g>
-        <circle cx="12" cy="15.500" r="2.200" fill="currentColor"/>
+        <circle cx="12" cy="15.5" r="2.2" fill="currentColor"/>
       </symbol>
 
       <symbol id="i-sessions" viewBox="0 0 24 24">
         <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="9"/>
-          <path d="M12 1.500v3M12 19.500v3"/>
+          <path d="M12 1.5v3M12 19.5v3"/>
         </g>
-        <circle cx="12" cy="12" r="3.200" fill="currentColor"/>
-      </symbol>
-
-      <symbol id="i-swap" viewBox="0 0 24 24">
-        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3.500 8h14M14 4.500 17.500 8 14 11.500M20.500 16H10"/>
-        </g>
-        <circle cx="5.500" cy="16" r="2.200" fill="currentColor"/>
+        <circle cx="12" cy="12" r="3.2" fill="currentColor"/>
       </symbol>
 
       <symbol id="i-go" viewBox="0 0 24 24">
         <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 12h11M15.500 7l5 5-5 5"/>
+          <path d="M9 12h11M15.5 7l5 5-5 5"/>
         </g>
-        <circle cx="4.500" cy="12" r="2.200" fill="currentColor"/>
+        <circle cx="4.5" cy="12" r="2.2" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="i-up" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 15V4M7 8.5l5-5 5 5"/>
+        </g>
+        <circle cx="12" cy="19.5" r="2.2" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 4v4.500M12 15.500V20M4 12h4.500M15.500 12H20"/>
+        </g>
+        <circle cx="12" cy="12" r="2.6" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5.500 5.500l4 4M14.500 14.500l4 4M18.500 5.500l-4 4M9.500 14.500l-4 4"/>
+        </g>
+        <circle cx="12" cy="12" r="2.2" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 14.500l3 3L20 7"/>
+        </g>
+        <circle cx="4.500" cy="11.500" r="2.200" fill="currentColor"/>
+      </symbol>
+
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 10.500l1 8.500a2 2 0 0 0 2 1.500h6a2 2 0 0 0 2-1.500l1-8.500M10 3.500h4"/>
+        </g>
+        <rect x="3.500" y="5.500" width="17" height="3.500" rx="1.750" fill="currentColor"/>
       </symbol>
     </defs>
   </svg>
@@ -83,29 +111,25 @@
       <div class="week" id="week"></div>
 
       <div class="hero">
-        <p class="hero-label" id="hero-label">Next up</p>
-        <h2><span id="hero-day"></span><br><span id="hero-name"></span></h2>
+        <p class="hero-label" id="hero-label"></p>
+        <h2 id="hero-name"></h2>
         <p class="hero-note" id="hero-note"></p>
-        <button class="btn" id="start-btn">
-          Start workout
+        <button class="btn" id="hero-btn">
+          <span id="hero-btn-text"></span>
           <svg class="icon"><use href="#i-go"/></svg>
         </button>
       </div>
 
-      <div class="plan-card">
+      <div class="plan-card" id="today-work">
         <div class="plan-head">
           <p class="section-label">The work</p>
-          <button class="swap" id="swap-btn">
-            <svg class="icon"><use href="#i-swap"/></svg>
-            <span id="swap-text"></span>
-          </button>
         </div>
-        <div class="map-panel">
-          <div class="body-map" id="body-map"></div>
+        <div class="map-panel" id="today-map">
+          <div class="body-map"></div>
           <div class="map-info">
-            <p class="map-kicker" id="map-kicker"></p>
-            <p class="map-title" id="map-title"></p>
-            <div class="chips" id="map-chips"></div>
+            <p class="map-kicker"></p>
+            <p class="map-title"></p>
+            <div class="chips"></div>
           </div>
         </div>
         <p class="map-hint">Tap an exercise to see what it trains.</p>
@@ -126,9 +150,16 @@
       </div>
     </section>
 
-    <!-- WORKOUT -->
+    <!-- WORKOUTS -->
     <section id="screen-workout" class="screen">
-      <div class="empty">
+      <button class="btn btn-volt" id="new-workout-btn">
+        New workout
+        <svg class="icon"><use href="#i-plus"/></svg>
+      </button>
+
+      <div id="workout-list"></div>
+
+      <div class="empty" id="workouts-empty">
         <svg class="art art-barbell" viewBox="0 0 200 90" aria-hidden="true">
           <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 45h172"/>
@@ -138,8 +169,8 @@
           </g>
           <rect class="art-solid" x="38" y="15" width="16" height="60" rx="8"/>
         </svg>
-        <h2>Bar is empty</h2>
-        <p>Logging sets, reps and kg arrives in step 3.</p>
+        <h2>No workouts yet</h2>
+        <p>Build one from the exercise library. You decide what goes in.</p>
       </div>
     </section>
 
@@ -169,13 +200,84 @@
     </button>
     <button class="tab" data-screen="workout">
       <svg class="icon"><use href="#i-workout"/></svg>
-      <span>Workout</span>
+      <span>Workouts</span>
     </button>
     <button class="tab" data-screen="progress">
       <svg class="icon"><use href="#i-progress"/></svg>
       <span>Progress</span>
     </button>
   </nav>
+
+  <!-- WORKOUT EDITOR: make a new workout or change one -->
+  <div class="sheet" id="editor" hidden>
+    <div class="sheet-head">
+      <button class="icon-btn" id="editor-close" aria-label="Close">
+        <svg class="icon"><use href="#i-close"/></svg>
+      </button>
+      <p class="sheet-title" id="editor-title"></p>
+      <button class="text-btn" id="editor-save">Save</button>
+    </div>
+
+    <div class="sheet-body">
+      <label class="field-label" for="editor-name">Name</label>
+      <input class="input" id="editor-name" placeholder="Chest day, Legs, Full body…" maxlength="30" autocomplete="off">
+
+      <div class="map-panel" id="editor-map">
+        <div class="body-map"></div>
+        <div class="map-info">
+          <p class="map-kicker"></p>
+          <p class="map-title"></p>
+          <div class="chips"></div>
+        </div>
+      </div>
+
+      <p class="field-label">Exercises</p>
+      <ol class="edit-list" id="editor-list"></ol>
+      <button class="btn btn-ghost" id="editor-add">
+        Add exercises
+        <svg class="icon"><use href="#i-plus"/></svg>
+      </button>
+
+      <p class="field-label">Train it on</p>
+      <div class="day-toggles" id="editor-days"></div>
+      <p class="field-hint" id="editor-days-hint"></p>
+
+      <button class="danger-btn" id="editor-delete">
+        <svg class="icon"><use href="#i-trash"/></svg>
+        Delete workout
+      </button>
+    </div>
+  </div>
+
+  <!-- EXERCISE PICKER: opens on top of the editor -->
+  <div class="sheet" id="picker" hidden>
+    <div class="sheet-head">
+      <span class="head-spacer"></span>
+      <p class="sheet-title">Add exercises</p>
+      <button class="text-btn" id="picker-done">Done</button>
+    </div>
+
+    <div class="filter" id="picker-filter"></div>
+    <ul class="pick-list" id="picker-list"></ul>
+
+    <div class="custom-box">
+      <p class="field-label">Not in the list? Make your own</p>
+      <input class="input" id="custom-name" placeholder="Exercise name" maxlength="30" autocomplete="off">
+      <select class="input" id="custom-muscle" aria-label="Main muscle"></select>
+      <button class="btn btn-ghost" id="custom-add">
+        Create and add
+        <svg class="icon"><use href="#i-plus"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- CHOOSER: small list that slides up from the bottom -->
+  <div class="backdrop" id="chooser" hidden>
+    <div class="chooser">
+      <p class="sheet-title" id="chooser-title"></p>
+      <div id="chooser-list"></div>
+    </div>
+  </div>
 
   <script src="exercises.js"></script>
   <script src="bodymap.js"></script>

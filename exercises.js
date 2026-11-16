@@ -67,9 +67,14 @@ const EXERCISES = [
   { id: "cardio", name: "Cardio finisher", primary: ["cardio"], secondary: [] },
 ];
 
+// The library plus the exercises you created yourself (saved on this phone, see plan.js)
+function allExercises() {
+  return EXERCISES.concat(loadCustomExercises());
+}
+
 // Look up one exercise by its id
 function findExercise(id) {
-  return EXERCISES.find((exercise) => exercise.id === id);
+  return allExercises().find((exercise) => exercise.id === id);
 }
 
 // Work out how hard each muscle is hit by a list of exercise ids.
