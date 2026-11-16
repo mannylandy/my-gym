@@ -1326,3 +1326,10 @@ document.addEventListener("visibilitychange", () => {
 
 renderAll();
 showScreen("today");
+
+// Keep a copy of the app on the phone so it opens without internet (see sw.js)
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {
+    // Not available here (for example a file opened straight from disk). The app still works.
+  });
+}
