@@ -1,40 +1,78 @@
+/* Look: "chalk and iron". Warm black, chalk white, one loud volt colour. */
 :root {
-  --bg: #111214;
-  --card: #1c1d21;
-  --text: #f2f2f2;
-  --muted: #8a8d96;
-  --accent: #4ade80;
-  --border: #2a2c31;
+  --ink: #12100e;
+  --surface: #1d1a17;
+  --surface-2: #29251f;
+  --line: #37322b;
+  --chalk: #f5f0e6;
+  --dust: #a09888;
+  --volt: #d4ff3f;
+  --heat: #ff6a2b;
+
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background:
+    radial-gradient(120% 50% at 100% 0%, rgba(212, 255, 63, 0.09), transparent 60%),
+    var(--ink);
+  background-attachment: fixed;
+  color: var(--chalk);
+  font-family: var(--body);
   min-height: 100vh;
-  padding-bottom: 80px; /* room for the tab bar */
+  padding-bottom: 120px; /* room for the floating tab bar */
 }
 
+/* ---------- Icons ---------- */
+.icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* ---------- Top bar ---------- */
 .top-bar {
-  padding: 20px 16px 12px;
-  padding-top: max(20px, env(safe-area-inset-top));
+  padding: 22px 20px 14px;
+  padding-top: max(22px, env(safe-area-inset-top));
+}
+
+.eyebrow {
+  color: var(--dust);
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+h1, h2, .tile-number, .btn, .hero-label {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .top-bar h1 {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 52px;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+}
+
+.top-bar h1.swap {
+  animation: rise 0.3s ease-out;
 }
 
 main {
   padding: 0 16px;
 }
 
+/* ---------- Screens ---------- */
 .screen {
   display: none;
 }
@@ -43,60 +81,311 @@ main {
   display: block;
 }
 
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 12px;
+/* Each block on a screen slides up a little, one after the other */
+.screen.active > * {
+  animation: rise 0.4s ease-out backwards;
+}
+.screen.active > *:nth-child(2) { animation-delay: 0.06s; }
+.screen.active > *:nth-child(3) { animation-delay: 0.12s; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.card h2 {
-  font-size: 22px;
-  margin: 4px 0 8px;
+/* ---------- Week strip ---------- */
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 16px;
 }
 
-.label {
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.muted {
-  color: var(--muted);
-}
-
-.tab-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  background: var(--card);
-  border-top: 1px solid var(--border);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.tab {
-  flex: 1;
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-size: 12px;
-  padding: 10px 0;
+.day {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
+  color: var(--dust);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.day-number {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  color: var(--chalk);
+  font-size: 15px;
+}
+
+.day.past .day-number {
+  color: var(--dust);
+  border-style: dashed;
+}
+
+.day.today {
+  color: var(--volt);
+}
+
+.day.today .day-number {
+  background: var(--volt);
+  border-color: var(--volt);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+/* ---------- Hero card ---------- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--volt);
+  color: var(--ink);
+  border-radius: 28px;
+  padding: 22px 22px 20px;
+  margin-bottom: 12px;
+}
+
+/* A big weight plate peeking in from the corner */
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -80px;
+  top: -70px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--volt) 0 16px, transparent 17px),
+    repeating-radial-gradient(circle, rgba(18, 16, 14, 0.13) 0 6px, transparent 6px 22px);
+  animation: spin 40s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-label {
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
+}
+
+.hero h2 {
+  font-size: 54px;
+  line-height: 0.9;
+  margin: 6px 0 12px;
+}
+
+.hero-note {
+  font-size: 14px;
+  opacity: 0.75;
+  max-width: 220px;
+  margin-bottom: 18px;
+}
+
+/* ---------- Button ---------- */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: var(--ink);
+  color: var(--chalk);
+  border: none;
+  border-radius: 18px;
+  padding: 16px 18px 16px 22px;
+  font-size: 24px;
+  letter-spacing: 0.02em;
   cursor: pointer;
+  transition: transform 0.15s var(--spring);
+}
+
+.btn .icon {
+  color: var(--volt);
+  transition: transform 0.25s var(--spring);
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn:active .icon {
+  transform: translateX(6px);
+}
+
+/* ---------- Stat tiles ---------- */
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 16px 18px;
+}
+
+.tile-icon {
+  color: var(--volt);
+}
+
+.tile-icon.heat {
+  color: var(--heat);
+}
+
+.tile-number {
+  font-size: 46px;
+  line-height: 1;
+  margin-top: 10px;
+}
+
+.tile-number span {
+  font-size: 24px;
+  color: var(--dust);
+}
+
+.tile-label {
+  color: var(--dust);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/* ---------- Empty states ---------- */
+.empty {
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: 28px;
+  padding: 40px 24px 34px;
+  text-align: center;
+}
+
+.empty h2 {
+  font-size: 38px;
+  line-height: 1;
+  margin: 22px 0 8px;
+}
+
+.empty p {
+  color: var(--dust);
+  font-size: 15px;
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+.art {
+  width: 200px;
+  max-width: 80%;
+  color: var(--chalk);
+}
+
+.art-solid {
+  fill: var(--volt);
+}
+
+/* The barbell gets lifted, slowly, forever */
+.art-barbell {
+  animation: lift 2.6s ease-in-out infinite;
+}
+
+@keyframes lift {
+  0%, 100% { transform: translateY(8px) rotate(-2deg); }
+  50%      { transform: translateY(-8px) rotate(2deg); }
+}
+
+/* The chart bars grow from the floor when the screen opens */
+.art-chart .bar {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: grow 0.6s var(--spring) backwards;
+}
+.art-chart .bar:nth-of-type(2) { animation-delay: 0.08s; }
+.art-chart .bar:nth-of-type(3) { animation-delay: 0.16s; }
+.art-chart .art-solid.bar      { animation-delay: 0.26s; }
+
+@keyframes grow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+/* ---------- Floating tab bar ---------- */
+.tab-bar {
+  --active: 0; /* which tab is selected: 0, 1 or 2 (set from app.js) */
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  display: flex;
+  padding: 6px;
+  background: rgba(41, 37, 31, 0.86);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* The volt pill that slides under the selected tab */
+.tab-pill {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  width: calc((100% - 12px) / 3);
+  background: var(--volt);
+  border-radius: 20px;
+  transform: translateX(calc(100% * var(--active)));
+  transition: transform 0.4s var(--spring);
+}
+
+.tab {
+  position: relative;
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--dust);
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 9px 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: color 0.2s;
 }
 
 .tab.active {
-  color: var(--accent);
+  color: var(--ink);
 }
 
-.tab-icon {
-  font-size: 22px;
+.tab.active .icon {
+  animation: pop 0.45s var(--spring);
+}
+
+.tab:active .icon {
+  transform: scale(0.85);
+}
+
+@keyframes pop {
+  0%   { transform: scale(0.7) rotate(-12deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* People who turned off motion on their phone get a calm version */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
