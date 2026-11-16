@@ -64,7 +64,7 @@ h1, h2, .tile-number, .btn, .hero-label {
   letter-spacing: -0.01em;
 }
 
-.top-bar h1.swap {
+.top-bar h1.title-in {
   animation: rise 0.3s ease-out;
 }
 
@@ -87,6 +87,7 @@ main {
 }
 .screen.active > *:nth-child(2) { animation-delay: 0.06s; }
 .screen.active > *:nth-child(3) { animation-delay: 0.12s; }
+.screen.active > *:nth-child(4) { animation-delay: 0.18s; }
 
 @keyframes rise {
   from { opacity: 0; transform: translateY(14px); }
@@ -219,6 +220,112 @@ main {
 
 .btn:active .icon {
   transform: translateX(6px);
+}
+
+/* ---------- Exercise list ---------- */
+.plan-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 16px 18px 8px;
+  margin-bottom: 12px;
+}
+
+.plan-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.section-label {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 22px;
+}
+
+.swap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2);
+  color: var(--chalk);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 7px 12px 7px 9px;
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s var(--spring);
+}
+
+.swap .icon {
+  width: 20px;
+  height: 20px;
+  color: var(--volt);
+  transition: transform 0.4s var(--spring);
+}
+
+.swap:active {
+  transform: scale(0.94);
+}
+
+.swap.flipped .icon {
+  transform: rotate(180deg);
+}
+
+.exercises {
+  list-style: none;
+}
+
+.exercise {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  animation: rise 0.35s ease-out backwards;
+}
+
+.exercise-index {
+  width: 26px;
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--volt);
+}
+
+.exercise-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.exercise-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.exercise-muscle {
+  color: var(--dust);
+  font-size: 13px;
+}
+
+.exercise-dose {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 22px;
+  white-space: nowrap;
+}
+
+.exercise.cardio .exercise-index,
+.exercise.cardio .exercise-dose {
+  color: var(--heat);
 }
 
 /* ---------- Stat tiles ---------- */

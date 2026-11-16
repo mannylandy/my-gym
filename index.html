@@ -56,6 +56,13 @@
         <circle cx="12" cy="12" r="3.200" fill="currentColor"/>
       </symbol>
 
+      <symbol id="i-swap" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3.500 8h14M14 4.500 17.500 8 14 11.500M20.500 16H10"/>
+        </g>
+        <circle cx="5.500" cy="16" r="2.200" fill="currentColor"/>
+      </symbol>
+
       <symbol id="i-go" viewBox="0 0 24 24">
         <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 12h11M15.500 7l5 5-5 5"/>
@@ -76,13 +83,24 @@
       <div class="week" id="week"></div>
 
       <div class="hero">
-        <p class="hero-label">Next up</p>
-        <h2>Day A<br>Upper body</h2>
-        <p class="hero-note">The full exercise list arrives in step 2.</p>
+        <p class="hero-label" id="hero-label">Next up</p>
+        <h2><span id="hero-day"></span><br><span id="hero-name"></span></h2>
+        <p class="hero-note" id="hero-note"></p>
         <button class="btn" id="start-btn">
           Start workout
           <svg class="icon"><use href="#i-go"/></svg>
         </button>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-head">
+          <p class="section-label">The work</p>
+          <button class="swap" id="swap-btn">
+            <svg class="icon"><use href="#i-swap"/></svg>
+            <span id="swap-text"></span>
+          </button>
+        </div>
+        <ol class="exercises" id="exercise-list"></ol>
       </div>
 
       <div class="tiles">
@@ -93,7 +111,7 @@
         </div>
         <div class="tile">
           <svg class="icon tile-icon"><use href="#i-sessions"/></svg>
-          <p class="tile-number">0<span>/4</span></p>
+          <p class="tile-number">0<span id="sessions-goal"></span></p>
           <p class="tile-label">Sessions this week</p>
         </div>
       </div>
@@ -150,6 +168,7 @@
     </button>
   </nav>
 
+  <script src="plan.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
