@@ -277,17 +277,146 @@ main {
   transform: rotate(180deg);
 }
 
+/* ---------- Body map ---------- */
+.map-panel {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--ink);
+  border-radius: 20px;
+  padding: 14px 14px 10px;
+  margin: 8px 0 10px;
+}
+
+.body-map {
+  width: 150px;
+  flex-shrink: 0;
+}
+
+.body-map svg {
+  display: block;
+  width: 100%;
+}
+
+.body-map .base {
+  fill: var(--surface-2);
+}
+
+.body-map .m {
+  fill: #3d3830;
+  transition: fill 0.35s ease-out;
+}
+
+.body-map .m.half {
+  fill: #7d9433; /* volt, turned down */
+}
+
+.body-map .m.on {
+  fill: var(--volt);
+}
+
+.map-label {
+  fill: var(--dust);
+  font-family: var(--body);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.map-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.map-kicker {
+  color: var(--dust);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.map-title {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 26px;
+  line-height: 1;
+  margin: 2px 0 10px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.chip {
+  background: var(--volt);
+  color: var(--ink);
+  border: 1.5px solid var(--volt);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.chip.half {
+  background: none;
+  color: #a9c44a;
+  border-color: #7d9433;
+}
+
+.chip.heat {
+  background: var(--heat);
+  border-color: var(--heat);
+}
+
+.map-hint {
+  color: var(--dust);
+  font-size: 12px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
 .exercises {
   list-style: none;
+}
+
+.exercises li {
+  border-top: 1px solid var(--line);
+  animation: rise 0.35s ease-out backwards;
 }
 
 .exercise {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 0;
-  border-top: 1px solid var(--line);
-  animation: rise 0.35s ease-out backwards;
+  width: calc(100% + 20px);
+  margin: 0 -10px;
+  padding: 12px 10px;
+  background: none;
+  border: none;
+  border-radius: 16px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s var(--spring);
+}
+
+.exercise:active {
+  transform: scale(0.98);
+}
+
+.exercise.selected {
+  background: var(--surface-2);
+}
+
+.exercise-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .exercise-index {
@@ -298,11 +427,6 @@ main {
   font-size: 26px;
   line-height: 1;
   color: var(--volt);
-}
-
-.exercise-text {
-  flex: 1;
-  min-width: 0;
 }
 
 .exercise-name {

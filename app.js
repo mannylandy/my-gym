@@ -74,7 +74,7 @@ function renderWeek() {
   }
 }
 
-// Finished workouts saved on this phone. Empty until step 3 adds logging.
+// Finished workouts saved on this phone. Empty until logging is built.
 function loadWorkouts() {
   try {
     return JSON.parse(localStorage.getItem("mygym.workouts")) || [];
@@ -96,20 +96,43 @@ function nextDayId() {
 // The day shown on the Today screen. Starts as the next one in the plan.
 let selectedDayId = nextDayId();
 
+// The exercise you tapped in the list (its position), or null for the whole workout
+let selectedExerciseIndex = null;
+
+function selectedDay() {
+  return PLAN.days.find((day) => day.id === selectedDayId);
+}
+
+// The exercises of a day, skipping any id that is not in the library (a typo, for example)
+function dayItems(day) {
+  return day.exercises.filter((item) => findExercise(item.exercise));
+}
+
+function isCardio(exercise) {
+  return exercise.primary.includes("cardio");
+}
+
+// Turn a list of muscle keys into readable names: "Chest · Triceps"
+function muscleNames(keys) {
+  return keys.map((key) => MUSCLES[key]).join(" · ");
+}
+
 // Fill the Today screen with the selected day from the plan
 function renderToday() {
-  const day = PLAN.days.find((d) => d.id === selectedDayId);
+  const day = selectedDay();
   const otherDay = PLAN.days.find((d) => d.id !== selectedDayId);
   const isPlanned = selectedDayId === nextDayId();
 
-  const lifts = day.exercises.filter((e) => e.muscle !== "Cardio");
-  const totalSets = lifts.reduce((sum, e) => sum + e.sets, 0);
+  const items = dayItems(day);
+  const lifts = items.filter((item) => !isCardio(findExercise(item.exercise)));
+  const totalSets = lifts.reduce((sum, item) => sum + item.sets, 0);
+  const hasCardio = lifts.length < items.length;
 
   document.getElementById("hero-label").textContent = isPlanned ? "Next up" : "Your pick";
   document.getElementById("hero-day").textContent = "Day " + day.id;
   document.getElementById("hero-name").textContent = day.name;
   document.getElementById("hero-note").textContent =
-    lifts.length + " exercises · " + totalSets + " sets · cardio finisher";
+    lifts.length + " exercises · " + totalSets + " sets" + (hasCardio ? " · cardio finisher" : "");
 
   document.getElementById("swap-text").textContent = "Day " + otherDay.id;
   document.getElementById("swap-btn").classList.toggle("flipped", !isPlanned);
@@ -118,33 +141,84 @@ function renderToday() {
   const list = document.getElementById("exercise-list");
   list.innerHTML = "";
 
-  day.exercises.forEach((exercise, i) => {
-    const isCardio = exercise.muscle === "Cardio";
+  items.forEach((item, i) => {
+    const exercise = findExercise(item.exercise);
+    const cardio = isCardio(exercise);
 
     const row = document.createElement("li");
-    row.className = "exercise" + (isCardio ? " cardio" : "");
     row.style.animationDelay = i * 0.04 + "s";
+
+    // A button, so the whole row can be tapped
+    const button = document.createElement("button");
+    button.className = "exercise" + (cardio ? " cardio" : "");
+    button.addEventListener("click", () => selectExercise(i));
 
     const index = document.createElement("span");
     index.className = "exercise-index";
-    index.textContent = isCardio ? "+" : i + 1;
+    index.textContent = cardio ? "+" : i + 1;
 
-    const text = document.createElement("div");
+    const text = document.createElement("span");
     text.className = "exercise-text";
-    const name = document.createElement("p");
+    const name = document.createElement("span");
     name.className = "exercise-name";
     name.textContent = exercise.name;
-    const muscle = document.createElement("p");
+    const muscle = document.createElement("span");
     muscle.className = "exercise-muscle";
-    muscle.textContent = exercise.muscle;
+    muscle.textContent = muscleNames(exercise.primary);
     text.append(name, muscle);
 
     const dose = document.createElement("span");
     dose.className = "exercise-dose";
-    dose.textContent = exercise.sets > 1 ? exercise.sets + " × " + exercise.reps : exercise.reps;
+    dose.textContent = item.sets > 1 ? item.sets + " × " + item.reps : item.reps;
 
-    row.append(index, text, dose);
+    button.append(index, text, dose);
+    row.append(button);
     list.append(row);
+  });
+
+  renderMap();
+}
+
+// Tap an exercise to see its muscles. Tap it again to go back to the whole workout.
+function selectExercise(index) {
+  selectedExerciseIndex = selectedExerciseIndex === index ? null : index;
+  renderMap();
+}
+
+// Light up the body map for the tapped exercise, or for the whole workout
+function renderMap() {
+  const items = dayItems(selectedDay());
+  const day = selectedDay();
+  const single = selectedExerciseIndex !== null;
+
+  const ids = single
+    ? [items[selectedExerciseIndex].exercise]
+    : items.map((item) => item.exercise);
+  const levels = muscleLevels(ids);
+
+  drawBodyMap(document.getElementById("body-map"), levels);
+
+  document.getElementById("map-kicker").textContent = single ? "This exercise" : "Whole workout";
+  document.getElementById("map-title").textContent = single
+    ? findExercise(ids[0]).name
+    : day.name;
+
+  // One chip per muscle: main muscles first, then the helpers
+  const chips = document.getElementById("map-chips");
+  chips.innerHTML = "";
+  [2, 1].forEach((level) => {
+    Object.keys(MUSCLES).forEach((key) => {
+      if (levels[key] !== level) return;
+      const chip = document.createElement("span");
+      chip.className = "chip" + (level === 1 ? " half" : "") + (key === "cardio" ? " heat" : "");
+      chip.textContent = MUSCLES[key];
+      chips.append(chip);
+    });
+  });
+
+  // Mark the tapped row in the list
+  document.querySelectorAll("#exercise-list .exercise").forEach((button, i) => {
+    button.classList.toggle("selected", i === selectedExerciseIndex);
   });
 }
 
@@ -152,6 +226,7 @@ function renderToday() {
 document.getElementById("swap-btn").addEventListener("click", () => {
   const otherDay = PLAN.days.find((d) => d.id !== selectedDayId);
   selectedDayId = otherDay.id;
+  selectedExerciseIndex = null;
   renderToday();
 });
 

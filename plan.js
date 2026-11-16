@@ -1,4 +1,5 @@
 // Your training plan. Change exercises, sets or reps here.
+// "exercise" is the id of an exercise in exercises.js.
 // The days repeat in order: A, B, A, B ...
 const PLAN = {
   sessionsPerWeek: 4,
@@ -7,25 +8,25 @@ const PLAN = {
       id: "A",
       name: "Upper body",
       exercises: [
-        { name: "Bench press", muscle: "Chest", sets: 3, reps: "8–10" },
-        { name: "Barbell row", muscle: "Back", sets: 3, reps: "8–10" },
-        { name: "Shoulder press", muscle: "Shoulders", sets: 3, reps: "10" },
-        { name: "Lat pulldown", muscle: "Back", sets: 3, reps: "10–12" },
-        { name: "Biceps curl", muscle: "Arms", sets: 2, reps: "12" },
-        { name: "Triceps pushdown", muscle: "Arms", sets: 2, reps: "12" },
-        { name: "Cardio finisher", muscle: "Cardio", sets: 1, reps: "10–15 min" },
+        { exercise: "bench-press", sets: 3, reps: "8–10" },
+        { exercise: "barbell-row", sets: 3, reps: "8–10" },
+        { exercise: "shoulder-press", sets: 3, reps: "10" },
+        { exercise: "lat-pulldown", sets: 3, reps: "10–12" },
+        { exercise: "biceps-curl", sets: 2, reps: "12" },
+        { exercise: "triceps-pushdown", sets: 2, reps: "12" },
+        { exercise: "cardio", sets: 1, reps: "10–15 min" },
       ],
     },
     {
       id: "B",
       name: "Lower body",
       exercises: [
-        { name: "Squat", muscle: "Legs", sets: 3, reps: "8–10" },
-        { name: "Romanian deadlift", muscle: "Hamstrings", sets: 3, reps: "10" },
-        { name: "Walking lunges", muscle: "Legs", sets: 3, reps: "10 each" },
-        { name: "Calf raise", muscle: "Calves", sets: 3, reps: "15" },
-        { name: "Plank", muscle: "Core", sets: 3, reps: "45 sec" },
-        { name: "Cardio finisher", muscle: "Cardio", sets: 1, reps: "10–15 min" },
+        { exercise: "squat", sets: 3, reps: "8–10" },
+        { exercise: "romanian-deadlift", sets: 3, reps: "10" },
+        { exercise: "walking-lunges", sets: 3, reps: "10 each" },
+        { exercise: "calf-raise", sets: 3, reps: "15" },
+        { exercise: "plank", sets: 3, reps: "45 sec" },
+        { exercise: "cardio", sets: 1, reps: "10–15 min" },
       ],
     },
   ],
