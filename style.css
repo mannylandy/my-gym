@@ -588,6 +588,11 @@ main {
     animation: none !important;
     transition: none !important;
   }
+
+  /* The chart line is hidden until its animation draws it, so show it right away */
+  .chart .line {
+    stroke-dashoffset: 0;
+  }
 }
 
 /* ================= Your own workouts ================= */
@@ -1354,4 +1359,206 @@ button, input, select {
 
 .hcard-line strong {
   color: var(--chalk);
+}
+
+/* ================= Progress charts ================= */
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 16px 16px 12px;
+  margin-bottom: 12px;
+}
+
+.chart-pick {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin: 10px -16px 14px;
+  padding: 0 16px;
+  scrollbar-width: none;
+}
+
+.chart-pick::-webkit-scrollbar {
+  display: none;
+}
+
+.chart-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat {
+  background: var(--ink);
+  border-radius: 16px;
+  padding: 10px 12px;
+}
+
+.stat-value {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.stat-value.up {
+  color: var(--volt);
+}
+
+.stat-label {
+  color: var(--dust);
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 3px;
+}
+
+.chart {
+  margin-top: 10px;
+}
+
+.chart svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.chart .grid {
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+
+.chart .axis {
+  fill: var(--dust);
+  font-family: var(--body);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.chart .area {
+  fill: url(#chart-fill);
+  animation: fade 0.8s ease-out 0.3s backwards;
+}
+
+/* The line draws itself from left to right */
+.chart .line {
+  fill: none;
+  stroke: var(--volt);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 0.9s ease-out forwards;
+}
+
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+
+.chart .dot {
+  fill: var(--ink);
+  stroke: var(--volt);
+  stroke-width: 2.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pop 0.4s var(--spring) backwards;
+}
+
+.chart .dot.last {
+  fill: var(--volt);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+
+.chart .tag {
+  fill: var(--chalk);
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.chart-hint {
+  color: var(--dust);
+  font-size: 12px;
+  text-align: center;
+  margin-top: 6px;
+}
+
+/* ---------- This week's muscles ---------- */
+.week-total {
+  color: var(--dust);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#week-map {
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+#week-map .body-map {
+  width: 190px;
+}
+
+.muscle-bars {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 8px;
+}
+
+.mbar {
+  display: grid;
+  grid-template-columns: 96px 1fr 24px;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.mbar-name {
+  color: var(--chalk);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mbar-track {
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mbar-fill {
+  display: block;
+  height: 100%;
+  background: var(--volt);
+  border-radius: 999px;
+  transform-origin: left;
+  animation: grow-x 0.6s var(--spring) backwards;
+}
+
+.mbar.heat .mbar-fill {
+  background: var(--heat);
+}
+
+@keyframes grow-x {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.mbar-num {
+  color: var(--dust);
+  font-weight: 700;
+  text-align: right;
+}
+
+.history-label {
+  margin: 22px 4px 10px;
 }

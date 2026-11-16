@@ -381,7 +381,232 @@ function renderWorkouts() {
 
 // ---------- Progress screen: your finished sessions, newest first ----------
 
+let chartExerciseId = null; // the exercise shown in the chart
+
+// Exercises you have logged at least once, the most recently trained first
+function loggedExerciseIds() {
+  const ids = [];
+  sessions
+    .slice()
+    .reverse()
+    .forEach((session) => {
+      session.exercises.forEach((entry) => {
+        if (!ids.includes(entry.exercise) && findExercise(entry.exercise)) ids.push(entry.exercise);
+      });
+    });
+  return ids;
+}
+
+// One point per session: the heaviest kg you lifted that day.
+// Bodyweight exercises (no kg) use the most reps, cardio uses the most minutes.
+function chartData(exerciseId) {
+  const exercise = findExercise(exerciseId);
+  const entries = [];
+  sessions.forEach((session) => {
+    session.exercises.forEach((entry) => {
+      if (entry.exercise === exerciseId && entry.sets.length) entries.push({ date: session.date, sets: entry.sets });
+    });
+  });
+
+  const usesKg = !isCardio(exercise) && entries.some((e) => e.sets.some((set) => set.kg > 0));
+  const unit = isCardio(exercise) ? "min" : usesKg ? "kg" : "reps";
+
+  // In kg mode, skip workouts where no weight was written down (they would show as 0)
+  const points = entries
+    .filter((e) => !usesKg || e.sets.some((set) => set.kg > 0))
+    .map((e) => ({
+      date: e.date,
+      value: Math.max(...e.sets.map((set) => (usesKg ? set.kg : set.reps))),
+    }));
+  return { points: points, unit: unit };
+}
+
+// "16 Nov"
+function shortDate(key) {
+  return parseKey(key).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+// Round to at most one decimal: 62.5 stays, 62.4999 becomes 62.5
+function niceNumber(value) {
+  return Math.round(value * 10) / 10;
+}
+
+// Draw the line chart as an SVG. Only numbers and dates go in, never typed text.
+function chartSvg(points, unit) {
+  const width = 320;
+  const height = 170;
+  const left = 34;
+  const right = 14;
+  const top = 16;
+  const bottom = 26;
+
+  const values = points.map((p) => p.value);
+  let min = Math.min(...values);
+  let max = Math.max(...values);
+  // Give the line some room so a flat line sits in the middle
+  const pad = Math.max((max - min) * 0.2, max * 0.05, 1);
+  min = Math.max(0, min - pad);
+  max = max + pad;
+
+  const x = (i) => (points.length === 1 ? (left + width - right) / 2 : left + (i * (width - left - right)) / (points.length - 1));
+  const y = (v) => top + ((max - v) * (height - top - bottom)) / (max - min);
+
+  const coords = points.map((p, i) => [x(i), y(p.value)]);
+  const line = coords.map((c, i) => (i ? "L" : "M") + c[0].toFixed(1) + " " + c[1].toFixed(1)).join(" ");
+  const floor = height - bottom;
+  const area =
+    line + " L" + coords[coords.length - 1][0].toFixed(1) + " " + floor + " L" + coords[0][0].toFixed(1) + " " + floor + " Z";
+
+  // Three faint guide lines with their values
+  let grid = "";
+  [0, 0.5, 1].forEach((f) => {
+    const value = min + (max - min) * f;
+    const gy = y(value).toFixed(1);
+    grid +=
+      '<line class="grid" x1="' + left + '" x2="' + (width - right) + '" y1="' + gy + '" y2="' + gy + '"/>' +
+      '<text class="axis" x="' + (left - 6) + '" y="' + gy + '" text-anchor="end" dominant-baseline="middle">' +
+      Math.round(value) + "</text>";
+  });
+
+  // Dates under the first and last point
+  let dates = '<text class="axis" x="' + coords[0][0].toFixed(1) + '" y="' + (height - 6) + '" text-anchor="' +
+    (points.length === 1 ? "middle" : "start") + '">' + shortDate(points[0].date) + "</text>";
+  if (points.length > 1) {
+    dates += '<text class="axis" x="' + coords[coords.length - 1][0].toFixed(1) + '" y="' + (height - 6) +
+      '" text-anchor="end">' + shortDate(points[points.length - 1].date) + "</text>";
+  }
+
+  // A dot per session. The newest one is big, with its value above it.
+  let dots = "";
+  coords.forEach((c, i) => {
+    const last = i === coords.length - 1;
+    dots += '<circle class="' + (last ? "dot last" : "dot") + '" cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) +
+      '" r="' + (last ? 6 : 3.5) + '" style="animation-delay:' + (0.3 + i * 0.05).toFixed(2) + 's"/>';
+  });
+  const lastC = coords[coords.length - 1];
+  const tag = niceNumber(points[points.length - 1].value) + " " + unit;
+  dots += '<text class="tag" x="' + Math.min(lastC[0], width - right).toFixed(1) + '" y="' + (lastC[1] - 12).toFixed(1) +
+    '" text-anchor="' + (points.length === 1 ? "middle" : "end") + '">' + tag + "</text>";
+
+  return (
+    '<svg viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="Progress chart">' +
+    '<defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#d4ff3f" stop-opacity="0.35"/><stop offset="1" stop-color="#d4ff3f" stop-opacity="0"/>' +
+    "</linearGradient></defs>" +
+    grid +
+    (points.length > 1 ? '<path class="area" d="' + area + '"/><path class="line" pathLength="1" d="' + line + '"/>' : "") +
+    dots +
+    dates +
+    "</svg>"
+  );
+}
+
+function renderChart() {
+  const ids = loggedExerciseIds();
+  document.getElementById("chart-card").hidden = ids.length === 0;
+  if (!ids.length) return;
+  if (!ids.includes(chartExerciseId)) chartExerciseId = ids[0];
+
+  // One chip per exercise you have logged
+  const pick = document.getElementById("chart-pick");
+  pick.innerHTML = "";
+  ids.forEach((id) => {
+    const chip = el("button", "filter-chip" + (id === chartExerciseId ? " on" : ""), findExercise(id).name);
+    chip.addEventListener("click", () => {
+      chartExerciseId = id;
+      renderChart();
+    });
+    pick.append(chip);
+  });
+
+  const data = chartData(chartExerciseId);
+  const values = data.points.map((p) => p.value);
+  const first = values[0];
+  const latest = values[values.length - 1];
+  const change = niceNumber(latest - first);
+
+  // Three numbers above the chart
+  const stats = document.getElementById("chart-stats");
+  stats.innerHTML = "";
+  [
+    ["Best", niceNumber(Math.max(...values)) + " " + data.unit, ""],
+    ["Latest", niceNumber(latest) + " " + data.unit, ""],
+    ["Since start", (change > 0 ? "+" : "") + change + " " + data.unit, change > 0 ? "up" : ""],
+  ].forEach(([label, value, extra]) => {
+    const stat = el("div", "stat");
+    stat.append(el("p", "stat-value " + extra, value), el("p", "stat-label", label));
+    stats.append(stat);
+  });
+
+  document.getElementById("chart").innerHTML = chartSvg(data.points, data.unit);
+  document.getElementById("chart-hint").textContent =
+    data.points.length === 1
+      ? "Log it again to see your line grow."
+      : data.unit === "kg"
+        ? "Heaviest set per workout."
+        : data.unit === "reps"
+          ? "Most reps in a set per workout."
+          : "Longest cardio per workout.";
+}
+
+// Sets per muscle this week, lit up on the body map
+function renderWeekMuscles() {
+  const thisWeek = mondayKey(new Date());
+  const weekSessions = sessions.filter((session) => mondayKey(parseKey(session.date)) === thisWeek);
+  document.getElementById("week-card").hidden = weekSessions.length === 0;
+  if (!weekSessions.length) return;
+
+  // Count each set for the main muscles of the exercise
+  const setsPer = {};
+  const levels = {};
+  let total = 0;
+  weekSessions.forEach((session) => {
+    session.exercises.forEach((entry) => {
+      const exercise = findExercise(entry.exercise);
+      if (!exercise) return;
+      total += entry.sets.length;
+      exercise.primary.forEach((muscle) => {
+        setsPer[muscle] = (setsPer[muscle] || 0) + entry.sets.length;
+        levels[muscle] = 2;
+      });
+      exercise.secondary.forEach((muscle) => {
+        if (!levels[muscle]) levels[muscle] = 1;
+      });
+    });
+  });
+
+  // Every exercise this week was deleted: nothing to show
+  if (total === 0) {
+    document.getElementById("week-card").hidden = true;
+    return;
+  }
+
+  document.getElementById("week-total").textContent =
+    weekSessions.length + (weekSessions.length === 1 ? " workout" : " workouts") + " · " + total + " sets";
+  drawBodyMap(document.querySelector("#week-map .body-map"), levels);
+
+  // A small bar per muscle, the most trained first
+  const bars = document.getElementById("muscle-bars");
+  bars.innerHTML = "";
+  const sorted = Object.keys(setsPer).sort((a, b) => setsPer[b] - setsPer[a]);
+  const most = setsPer[sorted[0]];
+  sorted.forEach((muscle, i) => {
+    const row = el("div", "mbar" + (muscle === "cardio" ? " heat" : ""));
+    const track = el("span", "mbar-track");
+    const fill = el("span", "mbar-fill");
+    fill.style.width = (setsPer[muscle] / most) * 100 + "%";
+    fill.style.animationDelay = i * 0.05 + "s";
+    track.append(fill);
+    row.append(el("span", "mbar-name", MUSCLES[muscle]), track, el("span", "mbar-num", setsPer[muscle]));
+    bars.append(row);
+  });
+}
+
 function renderProgress() {
+  renderChart();
+  renderWeekMuscles();
+  document.getElementById("history-label").hidden = sessions.length === 0;
+
   const list = document.getElementById("history-list");
   list.innerHTML = "";
   document.getElementById("progress-empty").hidden = sessions.length > 0;
