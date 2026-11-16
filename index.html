@@ -118,6 +118,7 @@
           <span id="hero-btn-text"></span>
           <svg class="icon"><use href="#i-go"/></svg>
         </button>
+        <button class="hero-alt" id="hero-alt">Change workout</button>
       </div>
 
       <div class="plan-card" id="today-work">
@@ -139,12 +140,12 @@
       <div class="tiles">
         <div class="tile">
           <svg class="icon tile-icon heat"><use href="#i-streak"/></svg>
-          <p class="tile-number">0</p>
+          <p class="tile-number" id="streak-number">0</p>
           <p class="tile-label">Week streak</p>
         </div>
         <div class="tile">
           <svg class="icon tile-icon"><use href="#i-sessions"/></svg>
-          <p class="tile-number">0<span id="sessions-goal"></span></p>
+          <p class="tile-number"><span id="sessions-number">0</span><span class="goal" id="sessions-goal"></span></p>
           <p class="tile-label">Sessions this week</p>
         </div>
       </div>
@@ -176,7 +177,9 @@
 
     <!-- PROGRESS -->
     <section id="screen-progress" class="screen">
-      <div class="empty">
+      <div id="history-list"></div>
+
+      <div class="empty" id="progress-empty">
         <svg class="art art-chart" viewBox="0 0 200 90" aria-hidden="true">
           <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 82h160"/>
@@ -187,7 +190,7 @@
           <rect class="art-solid bar" x="142" y="12" width="22" height="64" rx="7"/>
         </svg>
         <h2>No lifts yet</h2>
-        <p>Your charts start growing after your first logged workout.</p>
+        <p>Finish a workout and it shows up here.</p>
       </div>
     </section>
   </main>
@@ -245,6 +248,31 @@
       <button class="danger-btn" id="editor-delete">
         <svg class="icon"><use href="#i-trash"/></svg>
         Delete workout
+      </button>
+    </div>
+  </div>
+
+  <!-- LOGGER: doing a workout and ticking off sets -->
+  <div class="sheet" id="logger" hidden>
+    <div class="sheet-head">
+      <button class="icon-btn" id="logger-close" aria-label="Close">
+        <svg class="icon"><use href="#i-close"/></svg>
+      </button>
+      <p class="sheet-title" id="logger-title"></p>
+      <button class="text-btn" id="logger-finish">Finish</button>
+    </div>
+
+    <div class="log-progress">
+      <div class="log-bar"><span id="log-bar-fill"></span></div>
+      <p id="log-count"></p>
+    </div>
+
+    <div class="sheet-body" id="logger-list"></div>
+
+    <div class="sheet-body">
+      <button class="danger-btn" id="logger-discard">
+        <svg class="icon"><use href="#i-trash"/></svg>
+        Discard workout
       </button>
     </div>
   </div>

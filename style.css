@@ -449,7 +449,7 @@ main {
   margin-top: 10px;
 }
 
-.tile-number span {
+.tile-number .goal {
   font-size: 24px;
   color: var(--dust);
 }
@@ -1128,4 +1128,230 @@ button, input, select {
 .choice-note {
   color: var(--dust);
   font-size: 13px;
+}
+
+/* ================= Logging a workout ================= */
+
+.hero-alt {
+  display: block;
+  margin: 12px auto 0;
+  padding: 4px 10px;
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+/* A day you trained on */
+.day.done .day-number {
+  border-style: solid;
+  border-color: var(--volt);
+  color: var(--volt);
+}
+
+.day.today.done .day-number {
+  color: var(--ink);
+}
+
+.log-progress {
+  padding: 14px 16px 0;
+}
+
+.log-bar {
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.log-bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--volt);
+  border-radius: 999px;
+  transition: width 0.45s var(--spring);
+}
+
+#log-count {
+  color: var(--dust);
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.log-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 14px 14px 8px;
+  margin-top: 12px;
+}
+
+.log-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.log-last {
+  color: var(--dust);
+  font-size: 13px;
+  margin: 8px 0 10px;
+}
+
+.set-head,
+.set-row {
+  display: grid;
+  grid-template-columns: 30px 1fr 1fr 46px;
+  gap: 8px;
+  align-items: center;
+}
+
+.set-head.cardio,
+.set-row.cardio {
+  grid-template-columns: 30px 1fr 46px;
+}
+
+.set-head {
+  color: var(--dust);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.set-row {
+  margin-bottom: 6px;
+}
+
+.set-num {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--dust);
+  text-align: center;
+}
+
+.set-num.pr {
+  color: var(--heat);
+  font-size: 20px;
+  animation: pop 0.45s var(--spring);
+}
+
+.set-input {
+  padding: 9px 8px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* Hide the tiny up/down arrows browsers add to number boxes */
+.set-input::-webkit-outer-spin-button,
+.set-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.set-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.set-row.done .set-input {
+  border-color: #7d9433;
+  color: var(--volt);
+}
+
+.set-check {
+  width: 46px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  color: var(--dust);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s var(--spring);
+}
+
+.set-check:active {
+  transform: scale(0.88);
+}
+
+.set-row.done .set-check {
+  background: var(--volt);
+  border-color: var(--volt);
+  color: var(--ink);
+}
+
+.set-row.done .set-check .icon {
+  animation: pop 0.45s var(--spring);
+}
+
+.add-set {
+  background: none;
+  border: none;
+  color: var(--dust);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 4px 8px;
+  cursor: pointer;
+}
+
+/* ---------- Finished sessions on Progress ---------- */
+.hcard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  animation: rise 0.35s ease-out backwards;
+}
+
+.hcard-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hcard-name {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 28px;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.hcard-date {
+  color: var(--dust);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.hcard-note {
+  color: #a9c44a;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+
+.hcard-line {
+  color: var(--dust);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.hcard-line strong {
+  color: var(--chalk);
 }

@@ -19,6 +19,8 @@ let workouts = loadMyWorkouts(); // the workouts you built
 let schedule = loadSchedule(); // 7 slots, Monday first: a workout id or null
 let todayPick = loadTodayPick(); // see plan.js
 let selectedExerciseIndex = null; // the exercise tapped on Today, or null
+let sessions = loadSessions(); // every workout you finished
+let activeSession = loadActiveSession(); // the workout you are in the middle of, or null
 
 // ---------- Small helpers ----------
 
@@ -91,6 +93,83 @@ function todaysWorkout() {
   return findWorkout(schedule[todayIndex()]);
 }
 
+// ---------- Numbers from your logged sessions ----------
+
+// "12 sets · 3,240 kg lifted · 1 PR"
+function sessionSummary(session) {
+  let sets = 0;
+  let volume = 0;
+  session.exercises.forEach((entry) => {
+    entry.sets.forEach((set) => {
+      sets += 1;
+      volume += set.kg * set.reps;
+    });
+  });
+
+  let text = sets + (sets === 1 ? " set" : " sets");
+  if (volume > 0) text += " · " + Math.round(volume).toLocaleString("en-GB") + " kg lifted";
+  if (session.prs) text += " · " + session.prs + (session.prs === 1 ? " PR" : " PRs");
+  return text;
+}
+
+// The sets you logged the last time you did an exercise, or null
+function lastLogged(exerciseId) {
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    const entry = sessions[i].exercises.find((e) => e.exercise === exerciseId);
+    if (entry && entry.sets.length) return entry.sets;
+  }
+  return null;
+}
+
+// The heaviest weight you have ever logged for an exercise (0 if never)
+function bestKg(exerciseId) {
+  let best = 0;
+  sessions.forEach((session) => {
+    session.exercises.forEach((entry) => {
+      if (entry.exercise !== exerciseId) return;
+      entry.sets.forEach((set) => {
+        best = Math.max(best, set.kg);
+      });
+    });
+  });
+  return best;
+}
+
+function sessionsThisWeek() {
+  const thisWeek = mondayKey(new Date());
+  return sessions.filter((session) => mondayKey(parseKey(session.date)) === thisWeek).length;
+}
+
+// Weeks in a row where you trained as many times as you planned (at least once).
+// This week counts as soon as you reach the goal, and does not break the streak before that.
+function weekStreak() {
+  const goal = Math.max(1, schedule.filter((id) => findWorkout(id)).length);
+
+  const perWeek = {};
+  sessions.forEach((session) => {
+    const week = mondayKey(parseKey(session.date));
+    perWeek[week] = (perWeek[week] || 0) + 1;
+  });
+
+  const cursor = parseKey(mondayKey(new Date()));
+  let streak = 0;
+  if ((perWeek[dateKey(cursor)] || 0) >= goal) streak += 1;
+  cursor.setDate(cursor.getDate() - 7);
+  while ((perWeek[dateKey(cursor)] || 0) >= goal) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 7);
+  }
+  return streak;
+}
+
+// What the big card on Today should show right now
+function heroState() {
+  if (activeSession) return "active"; // a workout is in progress
+  if (sessions.some((session) => session.date === todayKey())) return "done";
+  if (workouts.length === 0) return "empty";
+  return todaysWorkout() ? "planned" : "rest";
+}
+
 // ---------- Screens and tabs ----------
 
 function showScreen(name) {
@@ -156,6 +235,7 @@ function renderWeek() {
     if (i < todayIndex()) day.classList.add("past");
     if (i === todayIndex()) day.classList.add("today");
     if (planned) day.classList.add("has");
+    if (sessions.some((session) => session.date === dateKey(date))) day.classList.add("done");
     day.setAttribute("aria-label", DAY_NAMES[i] + (planned ? ": " + planned.name : ": rest"));
 
     day.append(
@@ -170,35 +250,45 @@ function renderWeek() {
 
 function renderToday() {
   const workout = todaysWorkout();
-  const label = document.getElementById("hero-label");
-  const name = document.getElementById("hero-name");
-  const note = document.getElementById("hero-note");
-  const buttonText = document.getElementById("hero-btn-text");
+  const state = heroState();
 
-  if (workouts.length === 0) {
-    label.textContent = "Start here";
-    name.textContent = "Build your first workout";
-    note.textContent = "Pick the exercises and watch the muscles light up.";
-    buttonText.textContent = "New workout";
-  } else if (workout) {
-    label.textContent = todayPick !== undefined ? "Your pick today" : "Planned for today";
-    name.textContent = workout.name;
-    note.textContent = workoutSummary(workout);
-    buttonText.textContent = "Change workout";
+  // label, big name, small note, button text
+  let texts;
+  if (state === "active") {
+    const done = countSets(activeSession, true);
+    texts = ["In progress", activeSession.name, done + " of " + countSets(activeSession, false) + " sets done", "Continue workout"];
+  } else if (state === "done") {
+    const todays = sessions.filter((session) => session.date === todayKey());
+    const latest = todays[todays.length - 1];
+    texts = ["Done today", latest.name, sessionSummary(latest), "Train again"];
+  } else if (state === "empty") {
+    texts = ["Start here", "Build your first workout", "Pick the exercises and watch the muscles light up.", "New workout"];
+  } else if (state === "planned") {
+    texts = [todayPick !== undefined ? "Your pick today" : "Planned for today", workout.name, workoutSummary(workout), "Start workout"];
   } else {
-    label.textContent = todayPick === "none" ? "Day off" : "Nothing planned";
-    name.textContent = "Rest day";
-    note.textContent = "Feel like training anyway? Pick one of your workouts.";
-    buttonText.textContent = "Pick a workout";
+    texts = [
+      todayPick === "none" ? "Day off" : "Nothing planned",
+      "Rest day",
+      "Feel like training anyway? Pick one of your workouts.",
+      "Pick a workout",
+    ];
   }
 
-  // The goal is the number of days you have put a workout on
+  document.getElementById("hero-label").textContent = texts[0];
+  document.getElementById("hero-name").textContent = texts[1];
+  document.getElementById("hero-note").textContent = texts[2];
+  document.getElementById("hero-btn-text").textContent = texts[3];
+  document.getElementById("hero-alt").hidden = state !== "planned";
+
+  // The two tiles. The goal is the number of days you have put a workout on.
   const plannedDays = schedule.filter((id) => findWorkout(id)).length;
+  document.getElementById("streak-number").textContent = weekStreak();
+  document.getElementById("sessions-number").textContent = sessionsThisWeek();
   document.getElementById("sessions-goal").textContent = plannedDays ? "/" + plannedDays : "";
 
-  // The exercise list and body map only show when there is a workout today
-  document.getElementById("today-work").hidden = !workout;
-  if (!workout) return;
+  // The exercise list and body map only show before you start today's workout
+  document.getElementById("today-work").hidden = state !== "planned";
+  if (state !== "planned") return;
 
   const list = document.getElementById("exercise-list");
   list.innerHTML = "";
@@ -289,10 +379,53 @@ function renderWorkouts() {
   });
 }
 
+// ---------- Progress screen: your finished sessions, newest first ----------
+
+function renderProgress() {
+  const list = document.getElementById("history-list");
+  list.innerHTML = "";
+  document.getElementById("progress-empty").hidden = sessions.length > 0;
+
+  sessions
+    .slice()
+    .reverse()
+    .forEach((session) => {
+      const card = el("div", "hcard");
+
+      const top = el("div", "hcard-top");
+      const date = parseKey(session.date).toLocaleDateString("en-GB", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      });
+      top.append(el("p", "hcard-name", session.name), el("p", "hcard-date", date));
+      card.append(top, el("p", "hcard-note", sessionSummary(session)));
+
+      session.exercises.forEach((entry) => {
+        const exercise = findExercise(entry.exercise);
+        const line = el("p", "hcard-line");
+        line.append(
+          el("strong", "", exercise ? exercise.name : "Removed exercise"),
+          " " + entry.sets.map((set) => setText(set, exercise)).join(", ")
+        );
+        card.append(line);
+      });
+
+      list.append(card);
+    });
+}
+
+// "60 kg × 8", "12 reps" for bodyweight, "10 min" for cardio
+function setText(set, exercise) {
+  if (exercise && isCardio(exercise)) return set.reps + " min";
+  return set.kg ? set.kg + " kg × " + set.reps : set.reps + " reps";
+}
+
 function renderAll() {
   renderWeek();
   renderToday();
   renderWorkouts();
+  renderProgress();
 }
 
 // ---------- Chooser: the small list that slides up from the bottom ----------
@@ -386,6 +519,238 @@ function chooseForToday() {
   options.push(newWorkoutOption());
 
   openChooser("Today", options);
+}
+
+// After finishing one workout today, pick one to do as well
+function chooseToTrainAgain() {
+  const options = workouts.map((workout) => ({
+    label: workout.name,
+    note: workoutSummary(workout),
+    onPick: () => startSession(workout),
+  }));
+  options.push(newWorkoutOption());
+  openChooser("Train again", options);
+}
+
+// ---------- Logging: doing a workout and writing down your sets ----------
+
+// Read a typed number. Accepts a comma ("62,5") and never goes below 0.
+function toNumber(text) {
+  const value = parseFloat(String(text).replace(",", "."));
+  return value > 0 ? value : 0;
+}
+
+// How many sets a session in progress has (all of them, or only the ticked ones)
+function countSets(session, onlyDone) {
+  let count = 0;
+  session.exercises.forEach((entry) => {
+    if (!findExercise(entry.exercise)) return; // a deleted custom exercise
+    entry.sets.forEach((set) => {
+      if (!onlyDone || set.done) count += 1;
+    });
+  });
+  return count;
+}
+
+// Start a workout. Each set is filled in with what you did last time.
+function startSession(workout) {
+  activeSession = {
+    workoutId: workout.id,
+    name: workout.name,
+    date: todayKey(),
+    exercises: validItems(workout).map((item) => {
+      const last = lastLogged(item.exercise);
+      const plannedReps = parseInt(item.reps, 10);
+      const sets = [];
+
+      for (let i = 0; i < item.sets; i++) {
+        const before = last ? last[i] || last[last.length - 1] : null;
+        sets.push({
+          kg: before && before.kg ? String(before.kg) : "",
+          reps: before ? String(before.reps) : plannedReps ? String(plannedReps) : "",
+          done: false,
+        });
+      }
+      return { exercise: item.exercise, sets: sets };
+    }),
+  };
+
+  saveActiveSession(activeSession);
+  openLogger();
+}
+
+function openLogger() {
+  document.getElementById("logger-title").textContent = activeSession.name;
+  document.getElementById("logger").hidden = false;
+  document.getElementById("logger").scrollTop = 0;
+  document.body.classList.add("locked");
+  renderLogger();
+}
+
+// Closing keeps the workout in progress. Today shows "Continue workout".
+function closeLogger() {
+  document.getElementById("logger").hidden = true;
+  document.body.classList.remove("locked");
+  renderAll();
+}
+
+function updateLoggerProgress() {
+  const done = countSets(activeSession, true);
+  const total = countSets(activeSession, false);
+  document.getElementById("log-count").textContent = done + " of " + total + " sets done";
+  document.getElementById("log-bar-fill").style.width = (total ? (done / total) * 100 : 0) + "%";
+  document.getElementById("logger-finish").disabled = done === 0;
+}
+
+function renderLogger() {
+  const list = document.getElementById("logger-list");
+  list.innerHTML = "";
+
+  activeSession.exercises.forEach((entry, exerciseIndex) => {
+    const exercise = findExercise(entry.exercise);
+    if (!exercise) return;
+    const cardio = isCardio(exercise);
+    const best = bestKg(entry.exercise);
+    const last = lastLogged(entry.exercise);
+
+    const card = el("div", "log-card");
+
+    const head = el("div", "log-head");
+    const text = el("span", "exercise-text");
+    text.append(
+      el("span", "exercise-name", exercise.name),
+      el("span", "exercise-muscle", muscleNames(exercise.primary))
+    );
+    head.append(el("span", "exercise-index", cardio ? "+" : exerciseIndex + 1), text);
+
+    const lastLine = el(
+      "p",
+      "log-last",
+      last ? "Last time: " + last.map((set) => setText(set, exercise)).join(", ") : "First time logging this one."
+    );
+
+    // Column names above the set rows
+    const labels = el("div", "set-head" + (cardio ? " cardio" : ""));
+    labels.append(el("span", "", "Set"));
+    if (!cardio) labels.append(el("span", "", "Kg"));
+    labels.append(el("span", "", cardio ? "Minutes" : "Reps"), el("span", "", ""));
+
+    card.append(head, lastLine, labels);
+
+    entry.sets.forEach((set, setIndex) => {
+      const row = el("div", "set-row" + (cardio ? " cardio" : ""));
+      const number = el("span", "set-num");
+
+      // A text box with a number keyboard, so "62,5" with a comma works too
+      const kg = el("input", "input set-input");
+      kg.type = "text";
+      kg.inputMode = "decimal";
+      kg.value = set.kg;
+      kg.setAttribute("aria-label", "Kg");
+
+      const reps = el("input", "input set-input");
+      reps.type = "number";
+      reps.inputMode = "numeric";
+      reps.min = "0";
+      reps.value = set.reps;
+      reps.setAttribute("aria-label", cardio ? "Minutes" : "Reps");
+
+      const check = el("button", "set-check");
+      check.setAttribute("aria-label", "Set done");
+      check.append(icon("check"));
+
+      // Show the row as done, and as a PR when it beats your heaviest ever
+      const refresh = () => {
+        const isPr = set.done && !cardio && best > 0 && toNumber(set.kg) > best;
+        row.classList.toggle("done", set.done);
+        number.classList.toggle("pr", isPr);
+        number.textContent = isPr ? "PR" : setIndex + 1;
+      };
+
+      kg.addEventListener("input", () => {
+        set.kg = kg.value;
+        saveActiveSession(activeSession);
+        refresh();
+      });
+      reps.addEventListener("input", () => {
+        set.reps = reps.value;
+        saveActiveSession(activeSession);
+      });
+      check.addEventListener("click", () => {
+        // A set needs reps (or minutes) before it can be ticked
+        if (!set.done && !(toNumber(set.reps) > 0)) {
+          reps.focus();
+          return;
+        }
+        set.done = !set.done;
+        saveActiveSession(activeSession);
+        refresh();
+        updateLoggerProgress();
+      });
+
+      row.append(number);
+      if (!cardio) row.append(kg);
+      row.append(reps, check);
+      refresh();
+      card.append(row);
+    });
+
+    // One more set, starting from the same numbers as the last one
+    const addSet = el("button", "add-set", "+ Add set");
+    addSet.addEventListener("click", () => {
+      const previous = entry.sets[entry.sets.length - 1];
+      entry.sets.push({ kg: previous ? previous.kg : "", reps: previous ? previous.reps : "", done: false });
+      saveActiveSession(activeSession);
+      renderLogger();
+    });
+    card.append(addSet);
+
+    list.append(card);
+  });
+
+  updateLoggerProgress();
+}
+
+// Save the ticked sets as a finished session
+function finishSession() {
+  let prs = 0;
+  const exercises = [];
+
+  activeSession.exercises.forEach((entry) => {
+    if (!findExercise(entry.exercise)) return; // a deleted custom exercise
+    const sets = entry.sets
+      .filter((set) => set.done)
+      .map((set) => ({ kg: toNumber(set.kg), reps: toNumber(set.reps) }));
+    if (!sets.length) return;
+
+    // A PR is a heavier weight than you have ever logged for this exercise
+    const best = bestKg(entry.exercise);
+    if (best > 0 && Math.max(...sets.map((set) => set.kg)) > best) prs += 1;
+
+    exercises.push({ exercise: entry.exercise, sets: sets });
+  });
+  if (!exercises.length) return;
+
+  sessions.push({
+    date: todayKey(),
+    workoutId: activeSession.workoutId,
+    name: activeSession.name,
+    prs: prs,
+    exercises: exercises,
+  });
+  saveSessions(sessions);
+
+  activeSession = null;
+  saveActiveSession(null);
+  closeLogger();
+  showScreen("today");
+}
+
+function discardSession() {
+  if (!confirm("Discard this workout? The sets you ticked will not be saved.")) return;
+  activeSession = null;
+  saveActiveSession(null);
+  closeLogger();
 }
 
 // ---------- Editor: make a new workout or change one ----------
@@ -686,10 +1051,20 @@ document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => showScreen(tab.dataset.screen));
 });
 
+// The big button on Today does different things depending on where you are
 document.getElementById("hero-btn").addEventListener("click", () => {
-  if (workouts.length === 0) openEditor(null);
+  const state = heroState();
+  if (state === "active") openLogger();
+  else if (state === "done") chooseToTrainAgain();
+  else if (state === "empty") openEditor(null);
+  else if (state === "planned") startSession(todaysWorkout());
   else chooseForToday();
 });
+document.getElementById("hero-alt").addEventListener("click", chooseForToday);
+
+document.getElementById("logger-close").addEventListener("click", closeLogger);
+document.getElementById("logger-finish").addEventListener("click", finishSession);
+document.getElementById("logger-discard").addEventListener("click", discardSession);
 
 document.getElementById("new-workout-btn").addEventListener("click", () => openEditor(null));
 
