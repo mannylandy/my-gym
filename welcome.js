@@ -99,11 +99,12 @@ function renderTip() {
 }
 
 // "Check in at 3T": 3T's website says links under 3t.no/app/ open the 3T app
-// straight away (iPhone and Android). Without the app installed it opens 3T's app web page.
+// (iPhone and Android). 3T has no public link to the Inngang tab (we tested 8 guesses),
+// so this opens the one known page, Profil, and you tap Inngang yourself.
 function renderCheckin() {
   const link = document.getElementById("checkin");
   link.hidden = !(profile && profile.gym3t);
-  link.href = "https://www.3t.no/app/";
+  link.href = "https://www.3t.no/app/profil";
 }
 
 // ---------- The quiz ----------
