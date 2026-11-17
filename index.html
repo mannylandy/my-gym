@@ -100,6 +100,14 @@
         <circle cx="4.500" cy="11.500" r="2.200" fill="currentColor"/>
       </symbol>
 
+      <symbol id="i-more" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="5" cy="12" r="1.8"/>
+          <circle cx="12" cy="12" r="1.8"/>
+        </g>
+        <circle cx="19" cy="12" r="2.6" fill="currentColor"/>
+      </symbol>
+
       <symbol id="i-trash" viewBox="0 0 24 24">
         <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6 10.500l1 8.500a2 2 0 0 0 2 1.500h6a2 2 0 0 0 2-1.500l1-8.500M10 3.500h4"/>
@@ -127,7 +135,7 @@
           <span id="hero-btn-text"></span>
           <svg class="icon"><use href="#i-go"/></svg>
         </button>
-        <button class="hero-alt" id="hero-alt">Change workout</button>
+        <button class="hero-alt" id="hero-alt">Pick another workout</button>
       </div>
 
       <div class="plan-card" id="today-work">
@@ -142,7 +150,13 @@
             <div class="chips"></div>
           </div>
         </div>
-        <p class="map-hint">Tap an exercise to see what it trains.</p>
+        <div class="map-legend">
+          <span class="lg lg-main">Main</span>
+          <span class="lg lg-help">Helper</span>
+          <span class="lg lg-tired">Still tired</span>
+        </div>
+        <p class="map-warn" id="today-warn" hidden></p>
+        <p class="map-hint">Tap an exercise, or a muscle on the body.</p>
         <ol class="exercises" id="exercise-list"></ol>
       </div>
 
@@ -162,6 +176,16 @@
 
     <!-- WORKOUTS -->
     <section id="screen-workout" class="screen">
+      <div class="plan-card" id="weekplan-card">
+        <div class="plan-head">
+          <p class="section-label">Week plan</p>
+          <p class="week-total" id="weekplan-count"></p>
+        </div>
+        <div class="weekplan" id="weekplan"></div>
+        <p class="map-hint">Tap a day to change it.</p>
+      </div>
+
+      <p class="section-label history-label" id="workouts-label">Your workouts</p>
       <button class="btn btn-volt" id="new-workout-btn">
         New workout
         <svg class="icon"><use href="#i-plus"/></svg>
@@ -201,6 +225,13 @@
         </div>
         <div class="map-panel" id="week-map">
           <div class="body-map"></div>
+        </div>
+        <div class="map-legend">
+          <span class="lg lg-h1">1–2 sets</span>
+          <span class="lg lg-h2">3–5</span>
+          <span class="lg lg-h3">6–9</span>
+          <span class="lg lg-main">10+</span>
+          <span class="lg lg-tired">Still tired</span>
         </div>
         <p class="map-kicker">Sets per muscle</p>
         <div class="muscle-bars" id="muscle-bars"></div>
@@ -248,36 +279,48 @@
         <svg class="icon"><use href="#i-close"/></svg>
       </button>
       <p class="sheet-title" id="editor-title"></p>
-      <button class="text-btn" id="editor-save">Save</button>
+      <span class="head-spacer"></span>
     </div>
 
     <div class="sheet-body">
-      <label class="field-label" for="editor-name">Name</label>
-      <input class="input" id="editor-name" placeholder="Chest day, Legs, Full body…" maxlength="30" autocomplete="off">
+      <section class="step" id="step-name">
+        <label class="step-head" for="editor-name"><span class="step-num">1</span>Name it</label>
+        <input class="input" id="editor-name" placeholder="Chest day, Legs, Full body…" maxlength="30" autocomplete="off">
+      </section>
 
-      <div class="map-panel" id="editor-map">
-        <div class="body-map"></div>
-        <div class="map-info">
-          <p class="map-kicker"></p>
-          <p class="map-title"></p>
-          <div class="chips"></div>
+      <section class="step" id="step-exercises">
+        <p class="step-head"><span class="step-num">2</span>Pick exercises <span class="step-note" id="editor-count"></span></p>
+        <div class="map-panel" id="editor-map">
+          <div class="body-map"></div>
+          <div class="map-info">
+            <p class="map-kicker"></p>
+            <p class="map-title"></p>
+            <div class="chips"></div>
+          </div>
         </div>
-      </div>
+        <ol class="edit-list" id="editor-list"></ol>
+        <button class="btn btn-ghost" id="editor-add">
+          <span id="editor-add-text">Add exercises</span>
+          <svg class="icon"><use href="#i-plus"/></svg>
+        </button>
+      </section>
 
-      <p class="field-label">Exercises</p>
-      <ol class="edit-list" id="editor-list"></ol>
-      <button class="btn btn-ghost" id="editor-add">
-        Add exercises
-        <svg class="icon"><use href="#i-plus"/></svg>
-      </button>
-
-      <p class="field-label">Train it on</p>
-      <div class="day-toggles" id="editor-days"></div>
-      <p class="field-hint" id="editor-days-hint"></p>
+      <section class="step" id="step-days">
+        <p class="step-head"><span class="step-num">3</span>Pick days <span class="step-note">optional</span></p>
+        <div class="day-toggles" id="editor-days"></div>
+        <p class="field-hint" id="editor-days-hint"></p>
+      </section>
 
       <button class="danger-btn" id="editor-delete">
         <svg class="icon"><use href="#i-trash"/></svg>
         Delete workout
+      </button>
+    </div>
+
+    <div class="save-bar">
+      <button class="btn btn-volt" id="editor-save">
+        <span id="editor-save-text">Save workout</span>
+        <svg class="icon"><use href="#i-check"/></svg>
       </button>
     </div>
   </div>
@@ -315,6 +358,10 @@
       <button class="text-btn" id="picker-done">Done</button>
     </div>
 
+    <div class="picker-top">
+      <div class="body-map picker-map" id="picker-map"></div>
+      <p class="map-hint">Tap a muscle to see its exercises.</p>
+    </div>
     <div class="filter" id="picker-filter"></div>
     <ul class="pick-list" id="picker-list"></ul>
 
@@ -335,6 +382,12 @@
       <p class="sheet-title" id="chooser-title"></p>
       <div id="chooser-list"></div>
     </div>
+  </div>
+
+  <!-- UNDO BAR: shows for a few seconds after you remove something -->
+  <div class="toast" id="toast" hidden role="status">
+    <span id="toast-text"></span>
+    <button id="toast-undo">Undo</button>
   </div>
 
   <script src="exercises.js"></script>

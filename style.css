@@ -258,7 +258,7 @@ main {
 }
 
 .body-map {
-  width: 150px;
+  width: 168px;
   flex-shrink: 0;
 }
 
@@ -271,17 +271,39 @@ main {
   fill: var(--surface-2);
 }
 
+/* Muscles: dark when not used, then four steps of volt heat */
 .body-map .m {
-  fill: #3d3830;
-  transition: fill 0.35s ease-out;
+  fill: #3a352d;
+  stroke: var(--ink);
+  stroke-width: 0.6;
+  transition: fill 0.35s ease-out, stroke 0.35s;
 }
 
-.body-map .m.half {
-  fill: #7d9433; /* volt, turned down */
+.body-map .m.h1 { fill: #4f5f25; }
+.body-map .m.h2 { fill: #7d9433; }
+.body-map .m.h3 { fill: #aacd36; }
+.body-map .m.h4 { fill: var(--volt); }
+
+/* Trained in the last 2 days: an orange dashed edge */
+.body-map .m.tired {
+  stroke: var(--heat);
+  stroke-width: 1.4;
+  stroke-dasharray: 2.5 1.8;
 }
 
-.body-map .m.on {
-  fill: var(--volt);
+/* The muscle you tapped in the exercise picker */
+.body-map .m.sel {
+  stroke: var(--chalk);
+  stroke-width: 1.6;
+  stroke-dasharray: none;
+}
+
+.body-map.tappable .m {
+  cursor: pointer;
+}
+
+.body-map.tappable .m:active {
+  opacity: 0.7;
 }
 
 .map-label {
@@ -719,24 +741,37 @@ button, input, select {
 
 /* ---------- Workout cards ---------- */
 .wcard {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  margin-bottom: 12px;
+  animation: rise 0.35s ease-out backwards;
+}
+
+.wcard-main {
   display: flex;
   align-items: center;
   gap: 16px;
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  padding: 14px 60px 14px 16px;
+  background: none;
+  border: none;
   border-radius: 24px;
-  padding: 14px 16px;
-  margin-bottom: 12px;
   color: var(--chalk);
   text-align: left;
   cursor: pointer;
-  animation: rise 0.35s ease-out backwards;
   transition: transform 0.15s var(--spring);
 }
 
-.wcard:active {
+.wcard-main:active {
   transform: scale(0.97);
+}
+
+.wcard-more {
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
 
 .body-map.mini {
@@ -1139,16 +1174,28 @@ button, input, select {
 
 .hero-alt {
   display: block;
-  margin: 12px auto 0;
-  padding: 4px 10px;
-  background: none;
-  border: none;
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px;
+  background: rgba(18, 16, 14, 0.08);
+  border: 2px solid rgba(18, 16, 14, 0.35);
+  border-radius: 18px;
   color: var(--ink);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  text-decoration: underline;
-  opacity: 0.75;
   cursor: pointer;
+  transition: transform 0.15s var(--spring);
+}
+
+.hero-alt:active {
+  transform: scale(0.96);
+}
+
+.btn span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* A day you trained on */
@@ -1561,4 +1608,423 @@ button, input, select {
 
 .history-label {
   margin: 22px 4px 10px;
+}
+
+/* ================= Easier editing ================= */
+
+/* ---------- Undo bar ---------- */
+.toast {
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  bottom: calc(max(14px, env(safe-area-inset-bottom)) + 96px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 12px 12px 18px;
+  background: var(--chalk);
+  color: var(--ink);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.toast.show {
+  animation: sheet-up 0.3s var(--spring);
+}
+
+#toast-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#toast-undo {
+  flex-shrink: 0;
+  background: var(--ink);
+  color: var(--volt);
+  border: none;
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ---------- Remove buttons ---------- */
+.remove-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 10px 0 8px;
+  background: rgba(255, 106, 43, 0.1);
+  border: 1.5px solid rgba(255, 106, 43, 0.45);
+  border-radius: 12px;
+  color: var(--heat);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s var(--spring);
+}
+
+.remove-btn .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.remove-btn:active {
+  transform: scale(0.9);
+}
+
+.set-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.remove-set {
+  color: var(--heat);
+}
+
+.remove-set:disabled {
+  opacity: 0.3;
+}
+
+.choice.danger .choice-label {
+  color: var(--heat);
+}
+
+/* ---------- Editor steps ---------- */
+.step {
+  margin-top: 22px;
+}
+
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 24px;
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  color: var(--dust);
+  font-family: var(--body);
+  font-style: normal;
+  font-size: 14px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.step.done .step-num {
+  background: var(--volt);
+  border-color: var(--volt);
+  color: transparent;
+  position: relative;
+}
+
+/* A tick replaces the number when the step is done */
+.step.done .step-num::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 6px;
+  border-left: 2.5px solid var(--ink);
+  border-bottom: 2.5px solid var(--ink);
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.step-note {
+  margin-left: auto;
+  color: var(--dust);
+  font-family: var(--body);
+  font-style: normal;
+  font-weight: 600;
+  text-transform: none;
+  font-size: 13px;
+}
+
+.sheet .map-panel {
+  margin-top: 0;
+}
+
+/* The save button stays at the bottom while you scroll */
+#editor {
+  padding-bottom: 0;
+}
+
+#editor .sheet-body {
+  padding-bottom: 24px;
+}
+
+.save-bar {
+  position: sticky;
+  bottom: 0;
+  padding: 18px 16px max(14px, env(safe-area-inset-bottom));
+  background: linear-gradient(rgba(18, 16, 14, 0), var(--ink) 40%);
+}
+
+.save-bar .btn {
+  margin: 0;
+}
+
+.save-bar .btn:disabled {
+  background: var(--surface-2);
+  color: var(--dust);
+}
+
+.save-bar .btn:disabled .icon {
+  display: none;
+}
+
+/* ---------- Week plan ---------- */
+.weekplan {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* long names get "…" instead of widening the page */
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+
+.wp-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--ink);
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  color: var(--dust);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s var(--spring);
+}
+
+.wp-row:active {
+  transform: scale(0.98);
+}
+
+.wp-row.today {
+  border-color: var(--volt);
+}
+
+.wp-row > .icon {
+  width: 20px;
+  height: 20px;
+  color: var(--dust);
+}
+
+.wp-day {
+  width: 34px;
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 20px;
+  text-transform: uppercase;
+}
+
+.wp-row.has .wp-day {
+  color: var(--volt);
+}
+
+.wp-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.wp-name {
+  font-size: 15px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wp-row.has .wp-name {
+  color: var(--chalk);
+}
+
+.wp-note {
+  font-size: 12px;
+}
+
+.wp-tag {
+  background: var(--volt);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* ---------- Map legend and warning ---------- */
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  margin: 2px 0 8px;
+  color: var(--dust);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.lg::before {
+  content: "";
+  width: 11px;
+  height: 11px;
+  border-radius: 4px;
+}
+
+.lg-main::before { background: var(--volt); }
+.lg-help::before,
+.lg-h2::before { background: #7d9433; }
+.lg-h1::before { background: #4f5f25; }
+.lg-h3::before { background: #aacd36; }
+.lg-tired::before {
+  background: #3a352d;
+  border: 1.5px dashed var(--heat);
+}
+
+.map-warn {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  background: rgba(255, 106, 43, 0.1);
+  border: 1px solid rgba(255, 106, 43, 0.4);
+  border-radius: 14px;
+  color: #ffb08a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ---------- Muscle info panel ---------- */
+.minfo-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.minfo .stat {
+  background: var(--surface-2);
+}
+
+.minfo .stat-value {
+  font-size: 20px;
+  white-space: normal;
+}
+
+.stat-value.tired {
+  color: var(--heat);
+}
+
+.stat-value.ready {
+  color: var(--volt);
+}
+
+.minfo-note {
+  margin-top: 10px;
+  color: #ffb08a;
+  font-size: 13px;
+}
+
+.minfo-list {
+  display: grid;
+  gap: 6px;
+}
+
+.minfo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--surface-2);
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  color: var(--chalk);
+  text-align: left;
+}
+
+button.minfo-row {
+  cursor: pointer;
+}
+
+.minfo-row.picked {
+  border-color: var(--volt);
+}
+
+.minfo-tag {
+  flex-shrink: 0;
+  color: var(--volt);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* ---------- Picker body map ---------- */
+.picker-top {
+  padding: 14px 16px 0;
+}
+
+.body-map.picker-map {
+  width: 230px;
+  margin: 0 auto;
+}
+
+.picker-top .map-hint {
+  margin: 4px 0 0;
+}
+
+/* ---------- Bigger body: body on top, info under it ---------- */
+.map-panel {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 16px 14px 14px;
+}
+
+.map-panel .body-map {
+  width: 100%;
+  max-width: 290px;
+  margin: 0 auto;
+}
+
+.map-panel .map-info {
+  text-align: center;
+}
+
+.map-panel .map-title {
+  margin-bottom: 8px;
+}
+
+.map-panel .chips {
+  justify-content: center;
+}
+
+.body-map .map-label {
+  font-size: 7px;
 }

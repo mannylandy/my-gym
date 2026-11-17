@@ -4,7 +4,7 @@
 // Strategy: "network first". With internet you always get the newest version
 // (no more stale files after an update). Without internet the saved copy is used.
 
-const CACHE = "mygym-v2";
+const CACHE = "mygym-v3";
 
 const APP_FILES = [
   "./",

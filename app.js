@@ -162,6 +162,85 @@ function weekStreak() {
   return streak;
 }
 
+// ---------- Muscle status: sets this week, last trained, still tired ----------
+
+// Whole days between a "YYYY-MM-DD" date and today (0 = today)
+function daysAgo(key) {
+  return Math.round((parseKey(todayKey()) - parseKey(key)) / 86400000);
+}
+
+// Days since a muscle was a main muscle in a finished workout, or null if never
+function lastTrainedDays(muscle) {
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    const hit = sessions[i].exercises.some((entry) => {
+      const exercise = findExercise(entry.exercise);
+      return exercise && entry.sets.length && exercise.primary.includes(muscle);
+    });
+    if (hit) return daysAgo(sessions[i].date);
+  }
+  return null;
+}
+
+// A muscle trained today or yesterday still needs rest
+function tiredMuscles() {
+  return Object.keys(MUSCLES).filter((muscle) => {
+    if (muscle === "cardio") return false;
+    const days = lastTrainedDays(muscle);
+    return days !== null && days <= 1;
+  });
+}
+
+// Sets per main muscle this week, for example { chest: 8, triceps: 3 }
+function weekSetsPerMuscle() {
+  const thisWeek = mondayKey(new Date());
+  const setsPer = {};
+  sessions.forEach((session) => {
+    if (mondayKey(parseKey(session.date)) !== thisWeek) return;
+    session.exercises.forEach((entry) => {
+      const exercise = findExercise(entry.exercise);
+      if (!exercise) return;
+      exercise.primary.forEach((muscle) => {
+        setsPer[muscle] = (setsPer[muscle] || 0) + entry.sets.length;
+      });
+    });
+  });
+  return setsPer;
+}
+
+function lastTrainedText(days) {
+  if (days === null) return "Not yet";
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return days + " days ago";
+}
+
+// ---------- Undo bar ----------
+
+let toastTimer = null;
+let toastUndo = null;
+
+// Show a short message at the bottom. With an undo function you also get an Undo button.
+function showToast(text, undo) {
+  document.getElementById("toast-text").textContent = text;
+  document.getElementById("toast-undo").hidden = !undo;
+  toastUndo = undo || null;
+
+  const toast = document.getElementById("toast");
+  toast.hidden = false;
+  toast.classList.remove("show");
+  void toast.offsetWidth; // restart the slide-in animation
+  toast.classList.add("show");
+
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, 5000);
+}
+
+function hideToast() {
+  clearTimeout(toastTimer);
+  document.getElementById("toast").hidden = true;
+  toastUndo = null;
+}
+
 // What the big card on Today should show right now
 function heroState() {
   if (activeSession) return "active"; // a workout is in progress
@@ -199,7 +278,9 @@ function showScreen(name) {
 
 function fillMapPanel(panel, exerciseIds, kicker, title) {
   const levels = muscleLevels(exerciseIds);
-  drawBodyMap(panel.querySelector(".body-map"), levels);
+  // Only mark "still tired" on muscles this workout actually trains
+  const tired = tiredMuscles().filter((muscle) => levels[muscle]);
+  drawBodyMap(panel.querySelector(".body-map"), levels, { tired: tired, onTap: openMuscleInfo });
 
   panel.querySelector(".map-kicker").textContent = kicker;
   panel.querySelector(".map-title").textContent = title;
@@ -264,7 +345,7 @@ function renderToday() {
   } else if (state === "empty") {
     texts = ["Start here", "Build your first workout", "Pick the exercises and watch the muscles light up.", "New workout"];
   } else if (state === "planned") {
-    texts = [todayPick !== undefined ? "Your pick today" : "Planned for today", workout.name, workoutSummary(workout), "Start workout"];
+    texts = [todayPick !== undefined ? "Your pick today" : "Planned for today", workout.name, workoutSummary(workout), "Start " + workout.name];
   } else {
     texts = [
       todayPick === "none" ? "Day off" : "Nothing planned",
@@ -347,18 +428,76 @@ function renderTodayMap() {
   document.querySelectorAll("#exercise-list .exercise").forEach((button, i) => {
     button.classList.toggle("selected", i === selectedExerciseIndex);
   });
+
+  // Warn when today's workout hits a muscle you trained today or yesterday
+  const levels = muscleLevels(items.map((item) => item.exercise));
+  const tired = tiredMuscles().filter((muscle) => levels[muscle] === 2);
+  const warn = document.getElementById("today-warn");
+  warn.hidden = tired.length === 0;
+  warn.textContent = tired.length
+    ? "Still tired: " + muscleNames(tired) + ". Go lighter, or pick another workout."
+    : "";
 }
 
 // ---------- Workouts screen ----------
 
+// Monday to Sunday as a list. Tap a day to put a workout on it.
+function renderWeekPlan() {
+  document.getElementById("weekplan-card").hidden = workouts.length === 0;
+  document.getElementById("workouts-label").hidden = workouts.length === 0;
+
+  const box = document.getElementById("weekplan");
+  box.innerHTML = "";
+  let trainingDays = 0;
+
+  DAY_NAMES.forEach((dayName, i) => {
+    const planned = findWorkout(schedule[i]);
+    if (planned) trainingDays += 1;
+
+    const row = el("button", "wp-row" + (planned ? " has" : "") + (i === todayIndex() ? " today" : ""));
+    row.setAttribute("aria-label", dayName + ": " + (planned ? planned.name : "rest") + ". Tap to change.");
+
+    const text = el("span", "wp-text");
+    text.append(el("span", "wp-name", planned ? planned.name : "Rest"));
+    if (planned) text.append(el("span", "wp-note", workoutSummary(planned)));
+
+    row.append(el("span", "wp-day", DAY_SHORT[i]), text);
+    if (i === todayIndex()) row.append(el("span", "wp-tag", "Today"));
+    row.append(icon("go"));
+    row.addEventListener("click", () => chooseForWeekday(i));
+    box.append(row);
+  });
+
+  document.getElementById("weekplan-count").textContent =
+    trainingDays + (trainingDays === 1 ? " training day" : " training days");
+}
+
+// The "⋯" menu on a workout card
+function workoutMenu(workout) {
+  openChooser(workout.name, [
+    { label: "Start now", note: workoutSummary(workout), onPick: () => startSession(workout) },
+    { label: "Edit", note: "Name, exercises, sets and days", onPick: () => openEditor(workout.id) },
+    { label: "Make a copy", note: "Start a new workout from this one", onPick: () => copyWorkout(workout.id) },
+    { label: "Delete", note: "You can undo for a few seconds", danger: true, onPick: () => deleteWorkout(workout.id) },
+  ]);
+}
+
 function renderWorkouts() {
+  renderWeekPlan();
+
   const list = document.getElementById("workout-list");
   list.innerHTML = "";
   document.getElementById("workouts-empty").hidden = workouts.length > 0;
 
   workouts.forEach((workout) => {
-    const card = el("button", "wcard");
-    card.addEventListener("click", () => openEditor(workout.id));
+    const card = el("div", "wcard");
+    const main = el("button", "wcard-main");
+    main.addEventListener("click", () => openEditor(workout.id));
+
+    const more = el("button", "icon-btn wcard-more");
+    more.setAttribute("aria-label", "More for " + workout.name);
+    more.append(icon("more"));
+    more.addEventListener("click", () => workoutMenu(workout));
 
     const map = el("div", "body-map mini");
     drawBodyMap(map, muscleLevels(validItems(workout).map((item) => item.exercise)));
@@ -374,8 +513,51 @@ function renderWorkouts() {
     if (!days.children.length) days.append(el("span", "chip half", "No day set"));
     text.append(days);
 
-    card.append(map, text);
+    main.append(map, text);
+    card.append(main, more);
     list.append(card);
+  });
+}
+
+// Delete a workout. Undo puts it back where it was, on the same days.
+function deleteWorkout(id) {
+  const index = workouts.findIndex((workout) => workout.id === id);
+  if (index === -1) return;
+  const workout = workouts[index];
+  const days = schedule.map((slot) => slot === id);
+  const wasPick = todayPick === id;
+
+  workouts.splice(index, 1);
+  schedule = schedule.map((slot) => (slot === id ? null : slot));
+  if (wasPick) {
+    todayPick = undefined;
+    saveTodayPick(undefined);
+  }
+  saveMyWorkouts(workouts);
+  saveSchedule(schedule);
+  selectedExerciseIndex = null;
+  renderAll();
+
+  showToast('"' + workout.name + '" deleted', () => {
+    workouts.splice(Math.min(index, workouts.length), 0, workout);
+    schedule = schedule.map((slot, i) => (days[i] && slot === null ? id : slot));
+    if (wasPick && todayPick === undefined) {
+      todayPick = id;
+      saveTodayPick(id);
+    }
+    saveMyWorkouts(workouts);
+    saveSchedule(schedule);
+    renderAll();
+  });
+}
+
+// Open a new workout that starts as a copy (without its days). It is only saved when you press Save.
+function copyWorkout(id) {
+  const original = findWorkout(id);
+  if (!original) return;
+  openEditor(null, {
+    name: (original.name + " copy").slice(0, 30),
+    exercises: JSON.parse(JSON.stringify(original.exercises)),
   });
 }
 
@@ -558,7 +740,6 @@ function renderWeekMuscles() {
 
   // Count each set for the main muscles of the exercise
   const setsPer = {};
-  const levels = {};
   let total = 0;
   weekSessions.forEach((session) => {
     session.exercises.forEach((entry) => {
@@ -567,10 +748,6 @@ function renderWeekMuscles() {
       total += entry.sets.length;
       exercise.primary.forEach((muscle) => {
         setsPer[muscle] = (setsPer[muscle] || 0) + entry.sets.length;
-        levels[muscle] = 2;
-      });
-      exercise.secondary.forEach((muscle) => {
-        if (!levels[muscle]) levels[muscle] = 1;
       });
     });
   });
@@ -583,7 +760,11 @@ function renderWeekMuscles() {
 
   document.getElementById("week-total").textContent =
     weekSessions.length + (weekSessions.length === 1 ? " workout" : " workouts") + " · " + total + " sets";
-  drawBodyMap(document.querySelector("#week-map .body-map"), levels);
+  drawBodyMap(document.querySelector("#week-map .body-map"), setsPer, {
+    sets: true,
+    tired: tiredMuscles(),
+    onTap: openMuscleInfo,
+  });
 
   // A small bar per muscle, the most trained first
   const bars = document.getElementById("muscle-bars");
@@ -655,14 +836,21 @@ function renderAll() {
 
 // ---------- Chooser: the small list that slides up from the bottom ----------
 
-// options: [{ label, note, current, onPick }]
-function openChooser(title, options) {
+// The panel that slides up from the bottom, with any content in it
+function openPanel(title, content) {
   document.getElementById("chooser-title").textContent = title;
   const list = document.getElementById("chooser-list");
   list.innerHTML = "";
+  list.append(content);
+  document.getElementById("chooser").hidden = false;
+}
+
+// options: [{ label, note, current, danger, onPick }]
+function openChooser(title, options) {
+  const list = document.createDocumentFragment();
 
   options.forEach((option) => {
-    const button = el("button", "choice" + (option.current ? " current" : ""));
+    const button = el("button", "choice" + (option.current ? " current" : "") + (option.danger ? " danger" : ""));
     const text = el("span", "choice-text");
     text.append(el("span", "choice-label", option.label));
     if (option.note) text.append(el("span", "choice-note", option.note));
@@ -676,7 +864,58 @@ function openChooser(title, options) {
     list.append(button);
   });
 
-  document.getElementById("chooser").hidden = false;
+  openPanel(title, list);
+}
+
+// Tap a muscle on any body map: what it is, how it is doing, and its exercises
+function openMuscleInfo(muscle) {
+  const box = el("div", "minfo");
+  const days = lastTrainedDays(muscle);
+  const tired = days !== null && days <= 1;
+  const sets = weekSetsPerMuscle()[muscle] || 0;
+
+  const stats = el("div", "minfo-stats");
+  [
+    [sets + (sets === 1 ? " set" : " sets"), "This week", ""],
+    [lastTrainedText(days), "Last trained", ""],
+    [tired ? "Resting" : "Ready", "Status", tired ? "tired" : "ready"],
+  ].forEach(([value, label, extra]) => {
+    const stat = el("div", "stat");
+    stat.append(el("p", "stat-value " + extra, value), el("p", "stat-label", label));
+    stats.append(stat);
+  });
+  box.append(stats);
+
+  if (tired) box.append(el("p", "minfo-note", "Trained in the last 2 days. Give it a bit more rest for the best results."));
+
+  // In the editor, tap an exercise to add it to the workout (or take it out)
+  const editing = draft !== null && !document.getElementById("editor").hidden;
+  box.append(el("p", "field-label", editing ? "Tap to add to your workout" : "Exercises that train it"));
+
+  const list = el("div", "minfo-list");
+  allExercises()
+    .filter((exercise) => exercise.primary.includes(muscle))
+    .forEach((exercise) => {
+      const row = el(editing ? "button" : "div", "minfo-row");
+      row.append(el("span", "exercise-name", exercise.name));
+      if (editing) {
+        const picked = () => draft.exercises.some((item) => item.exercise === exercise.id);
+        const tag = el("span", "minfo-tag", picked() ? "Added" : "Add");
+        row.classList.toggle("picked", picked());
+        row.addEventListener("click", () => {
+          if (picked()) draft.exercises = draft.exercises.filter((item) => item.exercise !== exercise.id);
+          else addToDraft(exercise);
+          row.classList.toggle("picked", picked());
+          tag.textContent = picked() ? "Added" : "Add";
+          renderEditor();
+        });
+        row.append(tag);
+      }
+      list.append(row);
+    });
+  box.append(list);
+
+  openPanel(MUSCLES[muscle], box);
 }
 
 function closeChooser() {
@@ -779,6 +1018,7 @@ function countSets(session, onlyDone) {
 
 // Start a workout. Each set is filled in with what you did last time.
 function startSession(workout) {
+  hideToast();
   activeSession = {
     workoutId: workout.id,
     name: workout.name,
@@ -928,7 +1168,26 @@ function renderLogger() {
       saveActiveSession(activeSession);
       renderLogger();
     });
-    card.append(addSet);
+
+    // Take the last set away again (at least one set stays)
+    const removeSet = el("button", "add-set remove-set", "− Remove set");
+    removeSet.disabled = entry.sets.length <= 1;
+    removeSet.addEventListener("click", () => {
+      if (entry.sets.length <= 1) return;
+      const removed = entry.sets.pop();
+      saveActiveSession(activeSession);
+      renderLogger();
+      showToast("Set removed", () => {
+        if (!activeSession) return;
+        entry.sets.push(removed);
+        saveActiveSession(activeSession);
+        renderLogger();
+      });
+    });
+
+    const setButtons = el("div", "set-buttons");
+    setButtons.append(addSet, removeSet);
+    card.append(setButtons);
 
     list.append(card);
   });
@@ -965,6 +1224,7 @@ function finishSession() {
   });
   saveSessions(sessions);
 
+  hideToast();
   activeSession = null;
   saveActiveSession(null);
   closeLogger();
@@ -972,18 +1232,27 @@ function finishSession() {
 }
 
 function discardSession() {
-  if (!confirm("Discard this workout? The sets you ticked will not be saved.")) return;
+  const discarded = activeSession;
   activeSession = null;
   saveActiveSession(null);
   closeLogger();
+  showToast("Workout discarded", () => {
+    if (activeSession) return; // you already started another one
+    activeSession = discarded;
+    saveActiveSession(activeSession);
+    openLogger();
+  });
 }
 
 // ---------- Editor: make a new workout or change one ----------
 
 let draft = null; // the workout being edited (a copy, so Close throws the changes away)
 let draftDays = []; // weekdays ticked in the editor, for example [0, 3]
+let draftStart = ""; // how the draft looked when the editor opened, to spot changes
 
-function openEditor(workoutId) {
+// Open the editor on a workout, or on a new one (optionally filled in from a template)
+function openEditor(workoutId, template) {
+  hideToast();
   const existing = findWorkout(workoutId);
 
   draft = existing
@@ -993,6 +1262,9 @@ function openEditor(workoutId) {
   schedule.forEach((id, i) => {
     if (existing && id === existing.id) draftDays.push(i);
   });
+  draftStart = JSON.stringify([draft, draftDays]);
+  // A template counts as a change, so closing it asks before throwing it away
+  if (!existing && template) Object.assign(draft, template);
 
   document.getElementById("editor-title").textContent = existing ? "Edit workout" : "New workout";
   document.getElementById("editor-name").value = draft.name;
@@ -1005,9 +1277,22 @@ function openEditor(workoutId) {
 }
 
 function closeEditor() {
+  hideToast();
   document.getElementById("editor").hidden = true;
   document.body.classList.remove("locked");
   draft = null;
+}
+
+// The ✕ button: ask first if you changed something
+function leaveEditor() {
+  if (JSON.stringify([draft, draftDays]) === draftStart) {
+    closeEditor();
+    return;
+  }
+  openChooser("Leave without saving?", [
+    { label: "Keep editing", note: "Go back to your workout", onPick: () => {} },
+    { label: "Discard changes", note: "Close and forget what you changed", danger: true, onPick: closeEditor },
+  ]);
 }
 
 function renderEditor() {
@@ -1016,10 +1301,26 @@ function renderEditor() {
   renderEditorDays();
 }
 
-// Save only works when the workout has a name and at least one exercise
+// Save only works when the workout has a name and at least one exercise.
+// The button says what is still missing, and each finished step gets a tick.
 function updateSaveButton() {
-  const ready = draft.name.trim() !== "" && validItems(draft).length > 0;
-  document.getElementById("editor-save").disabled = !ready;
+  const hasName = draft.name.trim() !== "";
+  const count = validItems(draft).length;
+
+  document.getElementById("step-name").classList.toggle("done", hasName);
+  document.getElementById("step-exercises").classList.toggle("done", count > 0);
+  document.getElementById("step-days").classList.toggle("done", draftDays.length > 0);
+  document.getElementById("editor-count").textContent = count ? count + (count === 1 ? " exercise" : " exercises") : "";
+  document.getElementById("editor-add-text").textContent = count ? "Add more exercises" : "Add exercises";
+  document.getElementById("editor-map").hidden = count === 0;
+
+  const save = document.getElementById("editor-save");
+  save.disabled = !hasName || count === 0;
+  document.getElementById("editor-save-text").textContent = !hasName
+    ? "Give it a name first"
+    : count === 0
+      ? "Add at least 1 exercise"
+      : "Save workout";
 }
 
 function renderEditorMap() {
@@ -1059,13 +1360,20 @@ function renderEditorList() {
       renderEditorList();
     });
 
-    const remove = el("button", "icon-btn small");
-    remove.setAttribute("aria-label", "Remove");
-    remove.append(icon("close"));
+    const remove = el("button", "remove-btn");
+    remove.setAttribute("aria-label", "Remove " + exercise.name);
+    remove.append(icon("trash"), el("span", "", "Remove"));
     remove.addEventListener("click", () => {
-      draft.exercises.splice(i, 1);
+      const removed = draft.exercises.splice(i, 1)[0];
+      const owner = draft;
       renderEditorList();
       renderEditorMap();
+      showToast(exercise.name + " removed", () => {
+        if (draft !== owner) return; // the editor was closed or opened on another workout
+        draft.exercises.splice(Math.min(i, draft.exercises.length), 0, removed);
+        renderEditorList();
+        renderEditorMap();
+      });
     });
 
     top.append(el("span", "exercise-index", i + 1), text, up, remove);
@@ -1111,6 +1419,7 @@ function renderEditorDays() {
     button.addEventListener("click", () => {
       draftDays = draftDays.includes(i) ? draftDays.filter((d) => d !== i) : draftDays.concat(i);
       renderEditorDays();
+      updateSaveButton();
     });
     box.append(button);
   });
@@ -1148,26 +1457,16 @@ function saveEditor() {
   saveMyWorkouts(workouts);
   saveSchedule(schedule);
   selectedExerciseIndex = null;
+  const name = draft.name;
   closeEditor();
   renderAll();
+  showToast('"' + name + '" saved');
 }
 
 function deleteEditorWorkout() {
-  if (!confirm('Delete "' + draft.name + '"? This cannot be undone.')) return;
-
   const id = draft.id;
-  workouts = workouts.filter((workout) => workout.id !== id);
-  schedule = schedule.map((slot) => (slot === id ? null : slot));
-  if (todayPick === id) {
-    todayPick = undefined;
-    saveTodayPick(undefined);
-  }
-
-  saveMyWorkouts(workouts);
-  saveSchedule(schedule);
-  selectedExerciseIndex = null;
   closeEditor();
-  renderAll();
+  deleteWorkout(id);
 }
 
 // ---------- Exercise picker: opens on top of the editor ----------
@@ -1188,6 +1487,15 @@ function closePicker() {
 }
 
 function renderPicker() {
+  // The body on top: muscles in the workout glow, tap one to filter by it
+  drawBodyMap(document.getElementById("picker-map"), muscleLevels(draft.exercises.map((item) => item.exercise)), {
+    selected: pickerFilter,
+    onTap: (muscle) => {
+      pickerFilter = pickerFilter === muscle ? "all" : muscle;
+      renderPicker();
+    },
+  });
+
   // Filter chips: All, then every muscle
   const filter = document.getElementById("picker-filter");
   filter.innerHTML = "";
@@ -1293,7 +1601,7 @@ document.getElementById("logger-discard").addEventListener("click", discardSessi
 
 document.getElementById("new-workout-btn").addEventListener("click", () => openEditor(null));
 
-document.getElementById("editor-close").addEventListener("click", closeEditor);
+document.getElementById("editor-close").addEventListener("click", leaveEditor);
 document.getElementById("editor-save").addEventListener("click", saveEditor);
 document.getElementById("editor-delete").addEventListener("click", deleteEditorWorkout);
 document.getElementById("editor-add").addEventListener("click", openPicker);
@@ -1304,6 +1612,12 @@ document.getElementById("editor-name").addEventListener("input", (event) => {
 
 document.getElementById("picker-done").addEventListener("click", closePicker);
 document.getElementById("custom-add").addEventListener("click", createCustomExercise);
+
+document.getElementById("toast-undo").addEventListener("click", () => {
+  const undo = toastUndo;
+  hideToast();
+  if (undo) undo();
+});
 
 // Tapping the dark area outside the chooser closes it
 document.getElementById("chooser").addEventListener("click", (event) => {
