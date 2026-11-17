@@ -1,5 +1,3 @@
-const USER_NAME = "Manny";
-
 // Order must match the tabs in index.html
 const SCREENS = ["today", "workout", "progress"];
 
@@ -9,12 +7,13 @@ const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 
 // Big title and small line above it, per screen
 const SCREEN_TEXT = {
-  today: { title: "Today", eyebrow: () => greeting() + ", " + USER_NAME },
+  today: { title: "Today", eyebrow: () => greeting() + (profile && profile.name ? ", " + profile.name : "") },
   workout: { title: "Workouts", eyebrow: () => "Your plan, your rules" },
   progress: { title: "Progress", eyebrow: () => "Proof of work" },
 };
 
 // ---------- What the app remembers while it is open ----------
+let profile = loadProfile(); // your quiz answers, or null (see welcome.js)
 let workouts = loadMyWorkouts(); // the workouts you built
 let schedule = loadSchedule(); // 7 slots, Monday first: a workout id or null
 let todayPick = loadTodayPick(); // see plan.js
@@ -142,8 +141,14 @@ function sessionsThisWeek() {
 
 // Weeks in a row where you trained as many times as you planned (at least once).
 // This week counts as soon as you reach the goal, and does not break the streak before that.
+// How many workouts a week you aim for: your quiz answer, or the days in your week plan
+function weeklyGoal() {
+  if (profile && profile.days) return profile.days;
+  return schedule.filter((id) => findWorkout(id)).length;
+}
+
 function weekStreak() {
-  const goal = Math.max(1, schedule.filter((id) => findWorkout(id)).length);
+  const goal = Math.max(1, weeklyGoal());
 
   const perWeek = {};
   sessions.forEach((session) => {
@@ -361,11 +366,14 @@ function renderToday() {
   document.getElementById("hero-btn-text").textContent = texts[3];
   document.getElementById("hero-alt").hidden = state !== "planned";
 
-  // The two tiles. The goal is the number of days you have put a workout on.
-  const plannedDays = schedule.filter((id) => findWorkout(id)).length;
+  // The two tiles
+  const goal = weeklyGoal();
   document.getElementById("streak-number").textContent = weekStreak();
   document.getElementById("sessions-number").textContent = sessionsThisWeek();
-  document.getElementById("sessions-goal").textContent = plannedDays ? "/" + plannedDays : "";
+  document.getElementById("sessions-goal").textContent = goal ? "/" + goal : "";
+
+  renderTip();
+  renderCheckin();
 
   // The exercise list and body map only show before you start today's workout
   document.getElementById("today-work").hidden = state !== "planned";
@@ -828,6 +836,11 @@ function setText(set, exercise) {
 }
 
 function renderAll() {
+  // The round button top right shows your first letter
+  const button = document.getElementById("profile-btn");
+  button.textContent = profile && profile.name ? profile.name.trim().charAt(0).toUpperCase() : "";
+  button.hidden = !profile;
+
   renderWeek();
   renderToday();
   renderWorkouts();
@@ -1547,12 +1560,21 @@ function renderPicker() {
   }
 }
 
+// Starting sets and reps for a new exercise, based on your goal from the quiz
+const GOAL_DEFAULTS = {
+  strength: { sets: 4, reps: "5" },
+  muscle: { sets: 3, reps: "10" },
+  fitness: { sets: 3, reps: "15" },
+  general: { sets: 3, reps: "10" },
+};
+
 function addToDraft(exercise) {
   const cardio = isCardio(exercise);
+  const defaults = GOAL_DEFAULTS[profile ? profile.goal : "general"] || GOAL_DEFAULTS.general;
   draft.exercises.push({
     exercise: exercise.id,
-    sets: cardio ? 1 : 3,
-    reps: cardio ? "10 min" : "10",
+    sets: cardio ? 1 : defaults.sets,
+    reps: cardio ? "10 min" : defaults.reps,
   });
 }
 
@@ -1640,6 +1662,9 @@ document.addEventListener("visibilitychange", () => {
 
 renderAll();
 showScreen("today");
+
+// First time here: start with the welcome quiz
+if (!profile) openWelcome();
 
 // Keep a copy of the app on the phone so it opens without internet (see sw.js)
 if ("serviceWorker" in navigator) {

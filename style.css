@@ -2028,3 +2028,354 @@ button.minfo-row {
 .body-map .map-label {
   font-size: 7px;
 }
+
+/* ================= Welcome quiz and profile ================= */
+
+.top-bar {
+  position: relative;
+}
+
+.profile-btn {
+  position: absolute;
+  top: max(22px, env(safe-area-inset-top));
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 2px solid var(--volt);
+  color: var(--volt);
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 22px;
+  cursor: pointer;
+  transition: transform 0.15s var(--spring);
+}
+
+.profile-btn:active {
+  transform: scale(0.9);
+}
+
+/* ---------- Today: 3T and tip ---------- */
+.checkin {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 22px;
+  color: var(--chalk);
+  text-decoration: none;
+  transition: transform 0.15s var(--spring);
+}
+
+.checkin:active {
+  transform: scale(0.97);
+}
+
+.checkin > .icon {
+  color: var(--volt);
+}
+
+.checkin-badge {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: var(--chalk);
+  color: var(--ink);
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 22px;
+}
+
+.checkin-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.checkin-title {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.checkin-note {
+  color: var(--dust);
+  font-size: 13px;
+}
+
+.tip-card {
+  margin-top: 12px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--volt);
+  border-radius: 20px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.tip-card .hero-label {
+  color: var(--volt);
+  opacity: 1;
+  margin-bottom: 4px;
+}
+
+/* ---------- Quiz ---------- */
+.welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background:
+    radial-gradient(120% 60% at 100% 0%, rgba(212, 255, 63, 0.14), transparent 60%),
+    var(--ink);
+  animation: fade 0.3s ease-out;
+}
+
+.welcome-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  padding-top: max(14px, env(safe-area-inset-top));
+}
+
+.back-icon {
+  transform: scaleX(-1);
+}
+
+.welcome-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.welcome-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  transition: width 0.3s var(--spring), background 0.2s;
+}
+
+.welcome-dots .dot.past {
+  background: #7d9433;
+}
+
+.welcome-dots .dot.now {
+  width: 24px;
+  background: var(--volt);
+}
+
+.welcome-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 20px max(28px, env(safe-area-inset-bottom));
+  animation: rise 0.35s ease-out;
+}
+
+.welcome-body.step-intro {
+  justify-content: center;
+  text-align: center;
+}
+
+.quiz-logo {
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 10px;
+  border-radius: 30px;
+  background: var(--volt);
+  color: var(--ink);
+  animation: pop 0.6s var(--spring);
+}
+
+.quiz-logo .icon {
+  width: 56px;
+  height: 56px;
+}
+
+.quiz-title {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 46px;
+  line-height: 0.95;
+  margin-top: 16px;
+  overflow-wrap: anywhere;
+}
+
+.quiz-lead {
+  color: var(--dust);
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.quiz-small {
+  color: var(--dust);
+  font-size: 13px;
+  text-align: center;
+  min-height: 1em;
+}
+
+.quiz-input {
+  font-size: 22px;
+  padding: 16px 18px;
+  margin: 8px 0;
+}
+
+.quiz-next {
+  margin-top: auto;
+}
+
+.step-intro .quiz-next {
+  margin-top: 24px;
+}
+
+.quiz-next:disabled {
+  background: var(--surface-2);
+  color: var(--dust);
+}
+
+.quiz-skip {
+  background: none;
+  border: none;
+  color: var(--dust);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.answer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 18px;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 22px;
+  color: var(--chalk);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s var(--spring), border-color 0.2s;
+}
+
+.answer:active {
+  transform: scale(0.97);
+}
+
+.answer.on {
+  border-color: var(--volt);
+}
+
+.answer.on .pick-check {
+  background: var(--volt);
+  border-color: var(--volt);
+  color: var(--ink);
+}
+
+.answer-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.answer-title {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.answer-note {
+  color: var(--dust);
+  font-size: 14px;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.days-btn {
+  aspect-ratio: 1 / 1.3;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  color: var(--chalk);
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 28px;
+  cursor: pointer;
+  transition: transform 0.15s var(--spring), background 0.2s;
+}
+
+.days-btn:active {
+  transform: scale(0.9);
+}
+
+.days-btn.on {
+  background: var(--volt);
+  border-color: var(--volt);
+  color: var(--ink);
+}
+
+.quiz-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.quiz-summary .stat {
+  background: var(--surface);
+}
+
+.quiz-summary .stat-value {
+  font-size: 20px;
+  white-space: normal;
+}
+
+.starter {
+  margin-top: 8px;
+  padding: 18px;
+  background: var(--volt);
+  color: var(--ink);
+  border-radius: 24px;
+}
+
+.starter-name {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 34px;
+  line-height: 1;
+  margin: 4px 0 8px;
+}
+
+.starter-list {
+  font-size: 14px;
+  opacity: 0.8;
+}

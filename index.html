@@ -118,6 +118,7 @@
   </svg>
 
   <header class="top-bar">
+    <button class="profile-btn" id="profile-btn" aria-label="Your profile"></button>
     <p class="eyebrow" id="eyebrow"></p>
     <h1 id="screen-title">Today</h1>
   </header>
@@ -137,6 +138,15 @@
         </button>
         <button class="hero-alt" id="hero-alt">Pick another workout</button>
       </div>
+
+      <a class="checkin" id="checkin" hidden target="_blank" rel="noopener">
+        <span class="checkin-badge">3T</span>
+        <span class="checkin-text">
+          <span class="checkin-title">Check in at 3T</span>
+          <span class="checkin-note">Opens the 3T app to scan the door</span>
+        </span>
+        <svg class="icon"><use href="#i-go"/></svg>
+      </a>
 
       <div class="plan-card" id="today-work">
         <div class="plan-head">
@@ -171,6 +181,11 @@
           <p class="tile-number"><span id="sessions-number">0</span><span class="goal" id="sessions-goal"></span></p>
           <p class="tile-label">Sessions this week</p>
         </div>
+      </div>
+
+      <div class="tip-card" id="tip-card" hidden>
+        <p class="hero-label">Tip for you</p>
+        <p id="tip-text"></p>
       </div>
     </section>
 
@@ -390,9 +405,22 @@
     <button id="toast-undo">Undo</button>
   </div>
 
+  <!-- WELCOME QUIZ: first time you open the app, or from the profile button -->
+  <div class="welcome" id="welcome" hidden>
+    <div class="welcome-head">
+      <button class="icon-btn" id="welcome-back" aria-label="Back">
+        <svg class="icon back-icon"><use href="#i-go"/></svg>
+      </button>
+      <div class="welcome-dots" id="welcome-dots"></div>
+      <span class="head-spacer"></span>
+    </div>
+    <div class="welcome-body" id="welcome-body"></div>
+  </div>
+
   <script src="exercises.js"></script>
   <script src="bodymap.js"></script>
   <script src="plan.js"></script>
+  <script src="welcome.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

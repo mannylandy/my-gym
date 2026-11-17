@@ -9,6 +9,7 @@ const KEYS = {
   pick: "mygym.pick", // a different workout you picked just for today
   sessions: "mygym.sessions", // every workout you finished, with the sets you logged
   active: "mygym.active", // the workout you are in the middle of
+  profile: "mygym.profile", // your answers from the welcome quiz
 };
 
 function readStore(key, fallback) {
@@ -130,4 +131,22 @@ function saveActiveSession(active) {
     return;
   }
   writeStore(KEYS.active, active);
+}
+
+// Your profile from the welcome quiz, or null before you have done it:
+// { name: "Manny", age: 17, goal: "muscle", days: 4, gym3t: true }
+// Saved on this phone only. A real account can later sync this same object.
+function loadProfile() {
+  const profile = readStore(KEYS.profile, null);
+  if (!profile || typeof profile.name !== "string" || !profile.name.trim() || !profile.goal) return null;
+  // Damaged numbers fall back to safe values instead of showing nonsense
+  const days = parseInt(profile.days, 10);
+  profile.days = days >= 1 && days <= 7 ? days : 3;
+  const age = parseInt(profile.age, 10);
+  profile.age = age >= 10 && age <= 99 ? age : null;
+  return profile;
+}
+
+function saveProfile(profile) {
+  writeStore(KEYS.profile, profile);
 }
