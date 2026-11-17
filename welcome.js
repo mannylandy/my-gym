@@ -98,13 +98,12 @@ function renderTip() {
   document.getElementById("tip-text").textContent = tips[dayOfYear % tips.length];
 }
 
-// "Check in at 3T": opens the 3T app's store page, where "Open" starts the app
+// "Check in at 3T": 3T's website says links under 3t.no/app/ open the 3T app
+// straight away (iPhone and Android). Without the app installed it opens 3T's app web page.
 function renderCheckin() {
   const link = document.getElementById("checkin");
   link.hidden = !(profile && profile.gym3t);
-  link.href = /android/i.test(navigator.userAgent)
-    ? "https://play.google.com/store/apps/details?id=se.brpsystems.ttt"
-    : "https://apps.apple.com/no/app/3t/id456943404";
+  link.href = "https://www.3t.no/app/";
 }
 
 // ---------- The quiz ----------
